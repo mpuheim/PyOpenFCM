@@ -23,7 +23,7 @@ class Concept:
     inputMF = None
     outputMF = None
     
-    def __init__(self, name):
+    def __init__(self, name, value=0):
         """Concept instantiation operation (constructor).
         
         Attributes:
@@ -33,27 +33,56 @@ class Concept:
         """
         
         self.name = name;
-        self.newValue = 0;
-        self.value = 0;
+        self.newValue = value;
+        self.value = value;
         self.relation = Config.relation() # TODO - config default relation
         self.inputMF = Config.inputMF() # TODO - config default function
         self.outputMF = Config.outputMF() # TODO - config default function
+    
+    def __repr__(self):
+        return str(self.value)
 
-class FCM:
+class FCM(dict):
     """Represents fuzzy cognitive map. Provides methods to add, connect and configure map concepts and to calculate map updates.
     
     Attributes:
-    - concepts  - list of concepts
     - config    - current FCM configuration
     """
     
-    concepts = []      # empty list of concepts
     config = Config()  # default config
     
-    __c1 = None       # helper variable
-    __c2 = None       # helper variable
+    def __init__(self, *args, **kwargs):
+        """Initialize self."""
+        
+        for k, v in dict(*args, **kwargs).items():
+            vu=float(v) if isinstance(v,(int,float)) else v
+            dict.__setitem__(self, k, Concept(k,vu))
+
+    def __getitem__(self, key):
+        """x.__getitem__(y) <==> x[y]"""
+        
+        val = dict.__getitem__(self, key)
+        return val
+
+    def __setitem__(self, key, val):
+        """Set self[key] to value."""
+        
+        if isinstance(val,Concept):
+            dict.__setitem__(self, key, val)
+        elif isinstance(val,int):
+            dict.__setitem__(self, key, Concept(key,float(val)))
+        elif isinstance(val,float):
+            dict.__setitem__(self, key, Concept(key,val))
+        else:
+            raise Exception("Error - unsupported value type of",type(val))
+
+    def __repr__(self):
+        """Return repr(self)."""
+        
+        dictrepr = dict.__repr__(self)
+        return '%s(%s)' % (type(self).__name__, dictrepr)
     
-    def add(self, name):
+    def add(self, name, value=0):
         """Add new concept to the FCM.
         
         Arguments:
@@ -63,10 +92,10 @@ class FCM:
         """
         if (not name) or (not isinstance(name,str)) or (name == ""):
             raise Exception("Error - name is not string or empty")
-        elif any(x.name == name for x in self.concepts):
+        elif name in self:
             raise Exception("Error - name is already used for another concept")
         else:
-            self.concepts.append(Concept(name))
+            dict.__setitem__(self, name, Concept(name,value))
             
     def remove(self, name):
         """Remove concept from the FCM.
@@ -78,10 +107,10 @@ class FCM:
         """
         if (not name) or (not isinstance(name,str)) or (name == ""):
             raise Exception("Error - name is not string or empty")
-        elif not any(x.name == name for x in self.concepts):
+        elif not name in self:
             raise Exception("Error - there is no concept with name to be removed")
         else:
-            self.concepts = [x for x in self.concepts if x.name != name]
+            del self[name]
             
     def rename(self, currentname, newname):
         """Rename concept within the FCM.
@@ -96,16 +125,13 @@ class FCM:
             raise Exception("Error - currentname is not string or empty")
         elif (not newname) or (not isinstance(currentname,str)) or (newname == ""):
             raise Exception("Error - newname is not string or empty")
-        elif not any(x.name == currentname for x in self.concepts):
+        elif not currentname in self:
             raise Exception("Error - there is no concept with currentname to be removed")
-        elif any(x.name == newname for x in self.concepts):
+        elif newname in self:
             raise Exception("Error - concept with newname already exists")
         else:
-            for x in self.concepts:
-                if x.name == currentname:
-                    x.name = newname
-                    break
-                    
+            self[newname]=self.pop(currentname)
+
     def connect(self, preceding, following):
         """Connects two concepts within the FCM.
         
@@ -119,13 +145,12 @@ class FCM:
             raise Exception("Error - preceding is not string or empty")
         elif (not following) or (not isinstance(following,str)) or (following == ""):
             raise Exception("Error - following is not string or empty")
-        elif not any(x.name == preceding for x in self.concepts):
-            raise Exception("Error - there is no preceding concept with name " + preceding)
-        elif not any(x.name == following for x in self.concepts):
-            raise Exception("Error - there is no following concept with name " + following)
-        c1 = [item for item in self.concepts if item.name == preceding][0]
-        c2 = [item for item in self.concepts if item.name == following][0]
-        c2.relation.attach(c1)
+        else:
+            if not preceding in self:
+                self[preceding]=0
+            if not following in self:
+                self[following]=0
+            self[following].relation.attach(self[preceding])
         
     def disconnect(self, preceding, following):
         """Disconnects two concepts within the FCM.
@@ -140,64 +165,51 @@ class FCM:
             raise Exception("Error - preceding is not string or empty")
         elif (not following) or (not isinstance(following,str)) or (following == ""):
             raise Exception("Error - following is not string or empty")
-        elif not any(x.name == preceding for x in self.concepts):
+        elif not preceding in self:
             raise Exception("Error - there is no preceding concept with name " + preceding)
-        elif not any(x.name == following for x in self.concepts):
+        elif not following in self:
             raise Exception("Error - there is no following concept with name " + following)
-        c1 = [item for item in self.concepts if item.name == preceding][0]
-        c2 = [item for item in self.concepts if item.name == following][0]
-        c2.relation.dettach(c1)
+        else:
+            self[following].relation.detach(self[preceding])
 
     def get(self, name):
-        """Get current activation value of the concept
+        """Get concept reference by name
         
         Arguments:
         - name - concept name
         Returns:
-        - float value or raises Error Exception.
+        - Concept object instance
         """
         if (not name) or (not isinstance(name,str)) or (name == ""):
             raise Exception("Error - name is not string or empty")
-        elif not any(x.name == name for x in self.concepts):
+        elif not name in self:
             raise Exception("Error - there is no concept with name " + name)
         else:
-            c = [item for item in self.concepts if item.name == name][0]
-            return c.value
+            return self[name]
             
     def set(self, name, value):
-        """Set current activation value of the concept
+        """Set concept to specific activation value or Concept object instance
         
         Arguments:
         - name - concept name
-        - value - new activation value of the concept
+        - value - new activation value of the concept or Concept instance
         Returns:
         - None or raises Error Exception.
         """
         if (not name) or (not isinstance(name,str)) or (name == ""):
             raise Exception("Error - name is not string or empty")
-        elif not any(x.name == name for x in self.concepts):
-            raise Exception("Error - there is no concept with name " + name)
-        elif not isinstance(value, (int,float)):
-            raise Exception("Error - value is not of numeric data type")
+        elif not isinstance(value, (int,float,Concept)):
+            raise Exception("Error - value is neither numeric type nor Concept instance")
+        elif isinstance(value, Concept):
+            if name in self:
+                del self[name]
+            self[name]=value
+        elif isinstance(value, (int,float)):
+            self[name]=float(value)
+        
         else:
             c = [item for item in self.concepts if item.name == name][0]
             c.value = float(value)
-        
-    def concept(self, name):
-        """Getter for concept object
-        
-        Arguments:
-        - name - concept name
-        Returns:
-        - Concept or raises Error Exception.
-        """
-        if (not name) or (not isinstance(name,str)) or (name == ""):
-            raise Exception("Error - name is not string or empty")
-        elif not any(x.name == name for x in self.concepts):
-            raise Exception("Error - there is no concept with name " + name)
-        else:
-            c = [item for item in self.concepts if item.name == name][0]
-            return c
     
     def update(self):
         """Update activation values of all concept within the map
@@ -205,10 +217,10 @@ class FCM:
         Returns:
         - None or raises Error Exception.
         """
-        for c in self.concepts:
-            c.newValue = c.relation.propagate()
-        for c in self.concepts:
-            c.value = c.newValue
+        for name, concept in self.items():
+            concept.newValue = concept.relation.propagate()
+        for name, concept in self.items():
+            concept.value = concept.newValue
     
     def list(self):
         """Return string containing names of all concepts within the map
@@ -216,10 +228,10 @@ class FCM:
         Returns:
         - string containing sorted names of all concepts separated by semicolons
         """
-        if len(self.concepts) == 0:
+        if len(self) == 0:
             return ""
         else:
-            l = [x.name for x in self.concepts]
+            l = [x for x in self]
             l.sort()
             return ";".join(l)
 
@@ -234,13 +246,12 @@ class FCM:
         
         if (not name) or (not isinstance(name,str)) or (name == ""):
             raise Exception("Error - name is not string or empty")
-        elif not any(x.name == name for x in self.concepts):
+        elif not name in self:
             raise Exception("Error - there is no concept with name " + name)
-        c = [item for item in self.concepts if item.name == name][0]
-        if len(c.relation.previous)==0:
+        if len(self[name].relation.previous)==0:
             return ""
         else:
-            l=[x.name for x in c.relation.previous]
+            l=[x.name for x in self[name].relation.previous]
             l.sort()
             return ";".join(l)
         
