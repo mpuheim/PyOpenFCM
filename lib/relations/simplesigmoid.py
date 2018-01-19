@@ -101,7 +101,7 @@ class RSimpleSigmoid(IRelation):
     
         #set specific single weight
         if selection and value:
-            print("S:",selection,"val",value)
+            #print("S:",selection,"val",value)
             if not any(x.name == selection for x in self.previous):
                 raise Exception("Error - concept with name "+str(selection)+" was not found in the relation")
             for i in range(len(self.previous)):

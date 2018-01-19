@@ -7,13 +7,13 @@
             "pieces": []
         },
         "name": "C1",
-        "newValue": 0.6758955253730676,
+        "newValue": 0.6806955419411758,
         "outputMF": {
             "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
             "pieces": []
         },
         "relation": null,
-        "value": 0.6758955253730676
+        "value": 0.6806955419411758
     },
     "C2": {
         "py/object": "lib.fcm.Concept",
@@ -52,13 +52,13 @@
             "pieces": []
         },
         "name": "C4",
-        "newValue": 0.7502601055951177,
+        "newValue": 0.7569700696065358,
         "outputMF": {
             "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
             "pieces": []
         },
         "relation": null,
-        "value": 0.7502601055951177
+        "value": 0.7569700696065358
     },
     "__dict__": {
         "config": {
