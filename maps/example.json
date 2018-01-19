@@ -1,0 +1,120 @@
+{
+    "py/object": "lib.fcm.FCM",
+    "C1": {
+        "py/object": "lib.fcm.Concept",
+        "inputMF": {
+            "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
+            "pieces": []
+        },
+        "name": "C1",
+        "newValue": 0.6758955253730676,
+        "outputMF": {
+            "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
+            "pieces": []
+        },
+        "relation": null,
+        "value": 0.6758955253730676
+    },
+    "C2": {
+        "py/object": "lib.fcm.Concept",
+        "inputMF": {
+            "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
+            "pieces": []
+        },
+        "name": "C2",
+        "newValue": 0.5,
+        "outputMF": {
+            "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
+            "pieces": []
+        },
+        "relation": null,
+        "value": 0.5
+    },
+    "C3": {
+        "py/object": "lib.fcm.Concept",
+        "inputMF": {
+            "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
+            "pieces": []
+        },
+        "name": "C3",
+        "newValue": 0.5,
+        "outputMF": {
+            "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
+            "pieces": []
+        },
+        "relation": null,
+        "value": 0.5
+    },
+    "C4": {
+        "py/object": "lib.fcm.Concept",
+        "inputMF": {
+            "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
+            "pieces": []
+        },
+        "name": "C4",
+        "newValue": 0.7502601055951177,
+        "outputMF": {
+            "py/object": "lib.functions.piecewiselinear.PiecewiseLinear",
+            "pieces": []
+        },
+        "relation": null,
+        "value": 0.7502601055951177
+    },
+    "__dict__": {
+        "config": {
+            "py/object": "lib.config.Config"
+        },
+        "relations": {
+            "C1": {
+                "py/object": "lib.relations.simplesigmoid.RSimpleSigmoid",
+                "previous": [
+                    {
+                        "py/id": 16
+                    }
+                ],
+                "previous_names": [
+                    "C4"
+                ],
+                "weights": [
+                    1
+                ]
+            },
+            "C2": {
+                "py/object": "lib.relations.simplesigmoid.RSimpleSigmoid",
+                "previous": [],
+                "previous_names": [],
+                "weights": []
+            },
+            "C3": {
+                "py/object": "lib.relations.simplesigmoid.RSimpleSigmoid",
+                "previous": [],
+                "previous_names": [],
+                "weights": []
+            },
+            "C4": {
+                "py/object": "lib.relations.simplesigmoid.RSimpleSigmoid",
+                "previous": [
+                    {
+                        "py/id": 1
+                    },
+                    {
+                        "py/id": 6
+                    },
+                    {
+                        "py/id": 11
+                    }
+                ],
+                "previous_names": [
+                    "C1",
+                    "C2",
+                    "C3"
+                ],
+                "weights": [
+                    0.2,
+                    1,
+                    1
+                ]
+            }
+        }
+    }
+}

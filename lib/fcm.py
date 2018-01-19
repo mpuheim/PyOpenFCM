@@ -59,11 +59,9 @@ class FCM(dict):
         self.config = Config()
         # load from JSON string
         if len(args)==1 and isinstance(args[0],str) and args[0][0]=="{":
-            print("json-str",args[0])
             self.deserialize(args[0])
         # load from file path or file object
         elif len(args)==1:
-            print("file",args[0])
             self.load(args[0])
         #initialize FCM from args
         elif len(args)!=1:
