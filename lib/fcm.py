@@ -1,4 +1,5 @@
 from lib.config import Config
+import json, jsonpickle
 
 class Concept:
     """Represents single FCM concept.
@@ -40,6 +41,8 @@ class Concept:
         self.outputMF = Config.outputMF() # TODO - config default function
     
     def __repr__(self):
+        """Return repr(self)."""
+        
         return str(self.value)
 
 class FCM(dict):
@@ -48,15 +51,25 @@ class FCM(dict):
     Attributes:
     - config    - current FCM configuration
     """
-    
-    config = Config()  # default config
-    
+        
     def __init__(self, *args, **kwargs):
         """Initialize self."""
         
-        for k, v in dict(*args, **kwargs).items():
-            vu=float(v) if isinstance(v,(int,float)) else v
-            dict.__setitem__(self, k, Concept(k,vu))
+        # default config
+        self.config = Config()
+        # load from JSON string
+        if len(args)==1 and isinstance(args[0],str) and args[0][0]=="{":
+            print("json-str",args[0])
+            self.deserialize(args[0])
+        # load from file path or file object
+        elif len(args)==1:
+            print("file",args[0])
+            self.load(args[0])
+        #initialize FCM from args
+        elif len(args)!=1:
+            for k, v in dict(*args, **kwargs).items():
+                vu=float(v) if isinstance(v,(int,float)) else v
+                dict.__setitem__(self, k, Concept(k,vu))
 
     def __getitem__(self, key):
         """x.__getitem__(y) <==> x[y]"""
@@ -254,4 +267,86 @@ class FCM(dict):
             l=[x.name for x in self[name].relation.previous]
             l.sort()
             return ";".join(l)
+            
+    def serialize(self,indent=4):
+        """Return JSON representation of FCM
         
+        Arguments:
+        - indent - optional integer value used to set output indentation
+        Returns:
+        - string containing JSON encoded fuzzy cognitive map
+        """
+        
+        #preparation (separate relations to force flat pickle of concepts)
+        self.relations=dict()
+        for name, concept in self.items():
+            p=self.relations[name]=concept.relation
+            p.previous_names=[]
+            for prev in p.previous:
+                p.previous_names.append(prev.name)
+            #del concept.relation
+            concept.relation = None
+        #encode concepts & relations
+        line = jsonpickle.encode(self)
+        if indent<=0:
+            result = line
+        else:
+            obj = json.loads(line)
+            result = json.dumps(obj, indent=indent)
+        #restore former fcm (merge concepts & relations)
+        for name, concept in self.items():
+            concept.relation = self.relations[name]
+        del self.relations
+        #return JSON string
+        return result
+        
+    def deserialize(self,string):
+        """Initialize FCM from JSON representation
+        
+        Arguments:
+        - string - JSON representation of FCM
+        Returns:
+        - string containing JSON encoded fuzzy cognitive map
+        """
+        
+        #deserialize
+        new = jsonpickle.decode(string)
+        for name, value in new.relations.items():
+            del value.previous_names
+            new[name].relation=value
+        del new.relations
+        #copy to this object
+        self.clear()
+        for name, concept in new.items():
+            self[name]=concept
+        self.config=new.config
+    
+    def save(self,file,indent=4):
+        """Save JSON representation of FCM to file
+        
+        Arguments:
+        - file - writeable file object or string containing file path
+        Returns:
+        - None or raises Error Exception.
+        """
+        
+        if isinstance(file,str):
+            with open(file,"w") as f:
+                f.write(self.serialize(indent))
+        else:
+            file.write(self.serialize(indent))
+
+    def load(self,file):
+        """Load JSON representation of FCM from file
+        
+        Arguments:
+        - file - readable file object or string containing file path
+        Returns:
+        - None or raises Error Exception.
+        """
+        
+        if isinstance(file,str):
+            with open(file,"r") as f:
+                self.deserialize(f.read())
+        else:
+            self.deserialize(file.read())
