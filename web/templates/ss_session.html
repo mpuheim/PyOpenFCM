@@ -1,0 +1,27 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>OpenFCM webapi</title>
+  <meta name="description" content="OpenFCM webapi">
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+    FCM session:<br/>
+    <br/>
+    Run commands as URLs. Examples:<br/>
+    - add concept to map<br/>
+    <a href="/ss/{R}/execute/{R}['C1']=1">/ss/{R}/execute/{R}['C1']=1</a><br/>
+    - connect two concepts<br/>
+    <a href="/ss/{R}/execute/{R}.connect('C1','C2')">/ss/{R}/execute/{R}.connect('C1','C2')</a><br/>
+    - run map update<br/>
+    <a href="/ss/{R}/execute/{R}.update()">/ss/{R}/execute/{R}.update()</a><br/>
+
+</body>
+</html>

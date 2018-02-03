@@ -1,0 +1,22 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>OpenFCM webapi</title>
+  <meta name="description" content="OpenFCM webapi">
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+    <form method="post" onsubmit='return validate()'>
+        <p>Create new FCM with name: <input type="text" name="mapname" placeholder="Enter name" value="{R}" disabled style="display:inline-block;border-width:0px;border:none;"></p>
+        <p>Warning: FCM with name {R} already exists. Overwrite?</p>
+        <p><input type=submit value="Overwrite"></p>
+    </form>
+</body>
+</html>

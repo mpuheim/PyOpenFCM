@@ -1,0 +1,40 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>OpenFCM webapi</title>
+  <meta name="description" content="OpenFCM webapi">
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+    <form method="post" onsubmit='return validate()'>
+        <p>FCM name: <input type="text" name="mapname" placeholder="Enter name" value="" style="display:inline-block;border-width:0px;border:none;"></p>
+        <p><input type=submit value="Login"></p>
+    </form>
+    
+    <script>
+        function validate() {
+            var t = document.getElementsByName("mapname")[0].value;
+            if (t=="") {
+                alert("Enter FCM name!");
+                return false;
+            }
+            if (t.length<4) {
+                alert("Enter name with at least 4 characters!");
+                return false;
+            }
+            if (/[^a-zA-Z0-9]/.test(t)) {
+                alert("Only alfanumeric characters are permitted!\nDo not use spaces or special characters!");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

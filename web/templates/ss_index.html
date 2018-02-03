@@ -1,0 +1,60 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>OpenFCM webapi</title>
+  <meta name="description" content="OpenFCM webapi">
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+    Server-side FCM API:<br/>
+    <br/>
+    Options:<br/>
+        <form method="post" onsubmit='return validate("name")'>
+        1. Work with existing FCM at /ss/<input type="text" name="name" placeholder="name" value="" onkeyup="update('name')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/
+        </form>
+        <form method="post" onsubmit='return validate("logname")'>
+        2. Create new FCM at /ss/<input type="text" name="logname" placeholder="name" value="" onkeyup="update('logname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/login/
+        </form>
+        <form method="post" onsubmit='return validate("remname")'>
+        3. Delete existing FCM at /ss/<input type="text" name="remname" placeholder="name" value="" onkeyup="update('remname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/logout/
+        </form>
+        <form method="post" onsubmit='return validate("getname")'>
+        4. Get existing FCM as JSON at /ss/<input type="text" name="getname" placeholder="name" value="" onkeyup="update('getname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/serialize/
+        </form>
+    
+    <script>
+        function validate(name) {
+            var t = document.getElementsByName(name)[0].value;
+            if (t=="") {
+                alert("Enter FCM name!");
+                return false;
+            }
+            if (t.length<4) {
+                alert("Enter name with at least 4 characters!");
+                return false;
+            }
+            if (/[^a-zA-Z0-9]/.test(t)) {
+                alert("Only alfanumeric characters are permitted!\nDo not use spaces or special characters!");
+                return false;
+            }
+            return true;
+        }
+        function update(name) {
+            var e = document.getElementsByName(name)[0];
+            var t = e.value.length
+            if (t>4)
+                e.style.width = String(t+1)+"ch";
+            else
+                e.style.width = 5;
+            return true;
+        }
+    </script>
+</body>
+</html>

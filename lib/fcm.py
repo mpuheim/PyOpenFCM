@@ -50,8 +50,13 @@ class FCM(dict):
     
     Attributes:
     - config    - current FCM configuration
+    - name      - FCM identification name
     """
-        
+    
+    config = None
+    name = None
+    
+    #TODO - add name initialization
     def __init__(self, *args, **kwargs):
         """Initialize self."""
         
@@ -318,6 +323,7 @@ class FCM(dict):
         for name, concept in new.items():
             self[name]=concept
         self.config=new.config
+        self.name=new.name
     
     def save(self,file,indent=4):
         """Save JSON representation of FCM to file
