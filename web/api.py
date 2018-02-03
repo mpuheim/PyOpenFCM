@@ -1,6 +1,6 @@
 import datetime, sys, io, contextlib
 from ..lib.fcm import FCM
-from flask import Flask, session, redirect, url_for, escape, request
+from flask import Flask, session, redirect, url_for, request
 
 #create service application
 app = Flask(__name__)
