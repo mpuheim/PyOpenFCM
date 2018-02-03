@@ -92,7 +92,7 @@ def cs_process(mapname,command):
         ret+=response
         ret+="-------------------------------------\n"
         ret+="Processed in "+str(dt)+"ms."
-        ret="<pre>"+ret+"</pre>"
+        ret="<pre style='white-space:pre-wrap;'>"+ret+"</pre>"
         return ret
     if 'client_name' not in session:
         return redirect(url_for('cs_login'))
@@ -183,7 +183,7 @@ def ss_process(mapname,command):
         ret+=response
         ret+="-------------------------------------\n"
         ret+="Processed in "+str(dt)+"ms."
-        ret="<pre>"+ret+"</pre>"
+        ret="<pre style='white-space:pre-wrap;'>"+ret+"</pre>"
         return ret
     return ss_missing_template.replace("{R}",mapname)
     
@@ -192,6 +192,15 @@ def ss_serialize(mapname):
     if mapname in ss_maps:
         return ss_maps[mapname].serialize()
     return ss_missing_template.replace("{R}",mapname)
+    
+@app.route('/ss_list/')
+def ss_list():
+    ret=""
+    for m in ss_maps:
+        lnk=url_for('ss_index')+ss_maps[m].name
+        ret+="<a href='"+lnk+"'>"+lnk+"</a><br/>"
+    if ret=="": return "None"
+    return ret
 
 #-AUXILIARY----------------------------------------------------#
 
