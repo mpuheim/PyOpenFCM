@@ -265,21 +265,6 @@ def execute(_map_,cmd):
             if response=="":
                 response=str(_map_)+"\n"
     return response
-
-#url parser
-def getmapncmd(s):
-    nonchar=-1
-    for i in range(len(s)):
-        if not s[i].isalnum():
-            nonchar=i
-            break
-    if nonchar != -1:
-        name=s[0:nonchar]
-        cmd=s[nonchar:]
-    else:
-        name=s
-        cmd=""
-    return name, cmd
     
 #web output context manager
 @contextlib.contextmanager
