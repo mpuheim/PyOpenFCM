@@ -27,6 +27,8 @@ with open("templates/ss_index.html","r",encoding="utf8") as f: ss_index_template
 with open("templates/ss_maplogin.html","r",encoding="utf8") as f: ss_maplogin_template=f.read()
 with open("templates/ss_session.html","r",encoding="utf8") as f: ss_session_template=f.read()
 with open("templates/ss_missing.html","r",encoding="utf8") as f: ss_missing_template=f.read()
+webcli_template="template not loaded"
+with open("templates/webcli.html","r",encoding="utf8") as f: webcli_template=f.read()
 
 #service index
 @app.route("/")
@@ -66,13 +68,15 @@ def cs_session(mapname):
         return redirect(url_for('cs_login'))
     return cs_missing_template.replace("{R1}",mapname).replace("{R2}",session['client_name'])
 
-@app.route('/cs/<mapname>/execute/<command>/')
+@app.route('/cs/<mapname>/execute/<command>')
 def cs_process(mapname,command):
     if 'client_name' in session and session['client_name']==mapname:
         #processing start time
         st=datetime.datetime.now()
         #secure command (no underlines)
         cmd=command.replace("_","")
+        #fix dictionary in JSON object (if any)
+        cmd=cmd.replace('"dict":','"__dict__":')
         #create FCM object
         _map_=FCM(session['client_map'])
         #use FCM object in command
@@ -94,6 +98,17 @@ def cs_process(mapname,command):
         ret+="Processed in "+str(dt)+"ms."
         ret="<pre style='white-space:pre-wrap;'>"+ret+"</pre>"
         return ret
+    if 'client_name' not in session:
+        return redirect(url_for('cs_login'))
+    return cs_missing_template.replace("{R1}",mapname).replace("{R2}",session['client_name'])
+    
+@app.route('/cs/<mapname>/cli/', methods=['GET', 'POST'])
+def cs_webcli(mapname):
+    if 'client_name' in session and session['client_name']==mapname:
+        if request.method == 'POST' and 'command' in request.form:
+            command=request.form['command']
+            return webcli_template.replace("{R1}",href_for('cs_index')+mapname+"/cli/").replace("{R2}",cs_process(mapname,command))
+        return webcli_template.replace("{R1}",href_for('cs_index')+mapname+"/cli/").replace("{R2}","")
     if 'client_name' not in session:
         return redirect(url_for('cs_login'))
     return cs_missing_template.replace("{R1}",mapname).replace("{R2}",session['client_name'])
@@ -132,6 +147,10 @@ def ss_index():
         if 'getname' in request.form:
             mapname = request.form['getname']
             return redirect(url_for('ss_index')+mapname+"/serialize/")
+        #command line interface
+        if 'cliname' in request.form:
+            mapname = request.form['cliname']
+            return redirect(url_for('ss_index')+mapname+"/cli/")
     return ss_index_template
 
 @app.route('/ss/<mapname>/login/', methods=['GET', 'POST'])
@@ -159,13 +178,15 @@ def ss_session(mapname):
         return ss_session_template.replace("{R}",mapname)
     return ss_missing_template.replace("{R}",mapname)
     
-@app.route('/ss/<mapname>/execute/<command>/')
+@app.route('/ss/<mapname>/execute/<command>')
 def ss_process(mapname,command):
     if mapname in ss_maps:
         #processing start time
         st=datetime.datetime.now()
         #secure command (no underlines)
         cmd=command.replace("_","")
+        #fix dictionary in JSON object (if any)
+        cmd=cmd.replace('"dict":','"__dict__":')
         #get FCM object
         _map_=ss_maps[mapname]
         #use FCM object in command
@@ -187,6 +208,15 @@ def ss_process(mapname,command):
         return ret
     return ss_missing_template.replace("{R}",mapname)
     
+@app.route('/ss/<mapname>/cli/', methods=['GET', 'POST'])
+def ss_webcli(mapname):
+    if mapname not in ss_maps:
+        return ss_missing_template.replace("{R}",mapname)
+    if request.method == 'POST' and 'command' in request.form:
+        command=request.form['command']
+        return webcli_template.replace("{R1}",href_for('ss_index')+mapname+"/cli/").replace("{R2}",ss_process(mapname,command))
+    return webcli_template.replace("{R1}",href_for('ss_index')+mapname+"/cli/").replace("{R2}","")
+    
 @app.route('/ss/<mapname>/serialize/')
 def ss_serialize(mapname):
     if mapname in ss_maps:
@@ -197,7 +227,7 @@ def ss_serialize(mapname):
 def ss_list():
     ret=""
     for m in ss_maps:
-        lnk=url_for('ss_index')+ss_maps[m].name
+        lnk=url_for('ss_index')+m
         ret+="<a href='"+lnk+"'>"+lnk+"</a><br/>"
     if ret=="": return "None"
     return ret
@@ -206,6 +236,9 @@ def ss_list():
 
 #execute command (with specified map)
 def execute(_map_,cmd):
+    #disable interactive help
+    cmd=cmd.replace("help()","help")
+    #run command normally
     with stdoutIO() as s:
         #catch and return errors when not debugging
         if not app.debug:
@@ -224,10 +257,10 @@ def execute(_map_,cmd):
         #do not catch errors when debugging since Flask will show full error traceback
         else:
             try:
-                response=str(eval(cmd,{'__builtins__': {"print":print},"dir":dir,"help":help},{"_map_":_map_}))+"\n"
+                response=str(eval(cmd,{'__builtins__': {"print":print,"dir":dir,"help":help}},{"_map_":_map_}))+"\n"
                 if response=="None\n": response=s.getvalue()
             except SyntaxError:
-                exec(cmd,{'__builtins__': {"print":print},"dir":dir,"help":help},{"_map_":_map_})
+                exec(cmd,{'__builtins__': {"print":print,"dir":dir,"help":help}},{"_map_":_map_})
                 response=s.getvalue()
             if response=="":
                 response=str(_map_)+"\n"
@@ -257,6 +290,11 @@ def stdoutIO(stdout=None):
     sys.stdout = stdout
     yield stdout
     sys.stdout = old
+    
+#link generator
+def href_for(s):
+    l=url_for(s)
+    return "<a href='"+l+"'>"+l+"</a>"
 
 #--------------------------------------------------------------#
 

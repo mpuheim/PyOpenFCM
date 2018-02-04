@@ -13,7 +13,7 @@
 </head>
 
 <body>
-    Server-side FCM API:<br/>
+    Server-side <a href="/">FCM API</a>:<br/>
     <br/>
     Options:<br/>
         <form method="post" onsubmit='return validate("name")'>
@@ -28,7 +28,10 @@
         <form method="post" onsubmit='return validate("getname")'>
         4. Get existing FCM as JSON at /ss/<input type="text" name="getname" placeholder="name" value="" onkeyup="update('getname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/serialize/
         </form>
-        5. View all server-side FCMs at <a href="/ss_list/">/ss_list/</a>
+        <form method="post" onsubmit='return validate("cliname")'>
+        5. Command line interface (CLI) at /ss/<input type="text" name="cliname" placeholder="name" value="" onkeyup="update('cliname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/cli/
+        </form>
+        6. View all server-side FCMs at <a href="/ss_list/">/ss_list/</a>
     
     <script>
         function validate(name) {

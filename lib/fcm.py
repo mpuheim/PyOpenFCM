@@ -82,7 +82,7 @@ class FCM(dict):
 
     def __setitem__(self, key, val):
         """Set self[key] to value."""
-        
+
         if isinstance(val,Concept):
             dict.__setitem__(self, key, val)
         elif isinstance(val,int):
@@ -284,9 +284,9 @@ class FCM(dict):
         self.relations=dict()
         for name, concept in self.items():
             p=self.relations[name]=concept.relation
-            p.previous_names=[]
+            p.previousnames=[]
             for prev in p.previous:
-                p.previous_names.append(prev.name)
+                p.previousnames.append(prev.name)
             #del concept.relation
             concept.relation = None
         #encode concepts & relations
@@ -315,7 +315,7 @@ class FCM(dict):
         #deserialize
         new = jsonpickle.decode(string)
         for name, value in new.relations.items():
-            del value.previous_names
+            del value.previousnames
             new[name].relation=value
         del new.relations
         #copy to this object
