@@ -1,5 +1,6 @@
 import datetime, sys, io, contextlib
-from ..lib.fcm import FCM
+from fcmlib import FCM
+from fcmapi.templates import *
 from flask import Flask, session, redirect, url_for, request
 
 #create service application
@@ -7,28 +8,6 @@ app = Flask(__name__)
 
 #app secret key - keep this really secret:
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT' #TODO - use generator or file
-
-#html templates
-index_template="template not loaded"
-with open("templates/index.html","r",encoding="utf8") as f: index_template=f.read()
-cs_index_template="template not loaded"
-cs_maplogin_template="template not loaded"
-cs_session_template="template not loaded"
-cs_missing_template="template not loaded"
-with open("templates/cs_index.html","r",encoding="utf8") as f: cs_index_template=f.read()
-with open("templates/cs_maplogin.html","r",encoding="utf8") as f: cs_maplogin_template=f.read()
-with open("templates/cs_session.html","r",encoding="utf8") as f: cs_session_template=f.read()
-with open("templates/cs_missing.html","r",encoding="utf8") as f: cs_missing_template=f.read()
-ss_index_template="template not loaded"
-ss_maplogin_template="template not loaded"
-ss_session_template="template not loaded"
-ss_missing_template="template not loaded"
-with open("templates/ss_index.html","r",encoding="utf8") as f: ss_index_template=f.read()
-with open("templates/ss_maplogin.html","r",encoding="utf8") as f: ss_maplogin_template=f.read()
-with open("templates/ss_session.html","r",encoding="utf8") as f: ss_session_template=f.read()
-with open("templates/ss_missing.html","r",encoding="utf8") as f: ss_missing_template=f.read()
-webcli_template="template not loaded"
-with open("templates/webcli.html","r",encoding="utf8") as f: webcli_template=f.read()
 
 #service index
 @app.route("/")

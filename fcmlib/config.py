@@ -1,5 +1,5 @@
-from lib.relations.simplesigmoid import RSimpleSigmoid
-from lib.functions.piecewiselinear import PiecewiseLinear
+from fcmlib.relations.simplesigmoid import RSimpleSigmoid
+from fcmlib.functions.piecewiselinear import PiecewiseLinear
 
 _defaultRelation = RSimpleSigmoid
 _defaultInputMF = PiecewiseLinear

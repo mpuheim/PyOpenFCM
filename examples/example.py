@@ -1,4 +1,4 @@
-from lib.fcm import FCM
+from fcmlib import FCM
 import json
 
 print("initialize new FCM with two concepts")
@@ -43,8 +43,8 @@ while True:
     #update FCM by propagating signals via relations
     map.update()
     #save FCM to file as JSON
-    map.save("maps/example.json")
+    map.save("../maps/example.json")
     #load FCM from file as JSON
-    map=FCM("maps/example.json")
+    map=FCM("../maps/example.json")
     #press enter to repeat (CTRL+C to exit)
     input()

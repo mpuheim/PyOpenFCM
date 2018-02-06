@@ -1,0 +1,12 @@
+include README.md
+include LICENSE
+include fcmapi/templates/index.html
+include fcmapi/templates/cs_index.html
+include fcmapi/templates/cs_maplogin.html
+include fcmapi/templates/cs_session.html
+include fcmapi/templates/cs_missing.html
+include fcmapi/templates/ss_index.html
+include fcmapi/templates/ss_maplogin.html
+include fcmapi/templates/ss_session.html
+include fcmapi/templates/ss_missing.html
+include fcmapi/templates/webcli.html

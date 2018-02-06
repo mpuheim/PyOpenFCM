@@ -1,4 +1,4 @@
-from lib.config import Config
+from fcmlib.config import Config
 import json, jsonpickle
 
 class Concept:

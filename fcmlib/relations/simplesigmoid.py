@@ -1,5 +1,5 @@
 ﻿from math import exp
-from lib.interfaces import IRelation
+from fcmlib.interfaces import IRelation
 
 class RSimpleSigmoid(IRelation):
     """Represents MISO relations between preceding concepts and single following concept. (MISO - multiple input, single output)

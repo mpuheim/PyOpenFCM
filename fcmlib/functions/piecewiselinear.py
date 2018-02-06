@@ -1,4 +1,4 @@
-﻿from lib.interfaces import IFunction
+﻿from fcmlib.interfaces import IFunction
 
 class PiecewiseLinear(IFunction):
     """Simple piecewise linear function.
