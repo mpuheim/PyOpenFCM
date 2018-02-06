@@ -2,21 +2,23 @@
 Python Open Fuzzy Cognitive Maps Library (with Web API)  
 
 Depedencies:  
-- flask, jsonpickle  
+- git, flask, jsonpickle  
 
 Fast install & run Web API on Windows:  
-- download & extract ZIP archive  
+- install GIT from https://git-scm.com/download/win
+- download & extract repository ZIP archive  
 - run 'setup.bat' as admin  
-- run 'fcmapi_service.bat' from CMD  
+- run 'fcmapi/fcmapi_service.bat'    
 - open browser on http://localhost:5000/  
 
 Install on other systems:
+- install GIT
 - download & extract ZIP archive  
 - run elevated CMD in extracted directory  
 - pip install git+https://github.com/jsonpickle/jsonpickle.git   
 - pip install .  
 
-Usage of library:  
+Usage of library in Python:  
 - from fcmlib import FCM  
 - map=FCM()  
 
