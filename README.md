@@ -2,7 +2,9 @@
 Python Open Fuzzy Cognitive Maps Library (with Web API)  
 
 Depedencies:  
-- git, flask, jsonpickle  
+- Python 3.6  
+- flask, jsonpickle  
+- git  
 
 Fast install & run Web API on Windows:  
 - install GIT from https://git-scm.com/download/win
@@ -13,7 +15,7 @@ Fast install & run Web API on Windows:
 
 Install on other systems:
 - install GIT
-- download & extract ZIP archive  
+- download & extract repository ZIP archive  
 - run elevated CMD in extracted directory  
 - pip install git+https://github.com/jsonpickle/jsonpickle.git   
 - pip install .  
