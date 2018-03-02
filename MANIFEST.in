@@ -1,12 +1,9 @@
 include README.md
 include LICENSE
 include fcmapi/templates/index.html
-include fcmapi/templates/cs_index.html
-include fcmapi/templates/cs_maplogin.html
-include fcmapi/templates/cs_session.html
-include fcmapi/templates/cs_missing.html
-include fcmapi/templates/ss_index.html
-include fcmapi/templates/ss_maplogin.html
-include fcmapi/templates/ss_session.html
-include fcmapi/templates/ss_missing.html
+include fcmapi/templates/maplogin.html
+include fcmapi/templates/session.html
+include fcmapi/templates/missing.html
 include fcmapi/templates/webcli.html
+include fcmapi/templates/webgui.html
+include fcmapi/templates/d3.v3.min.js

@@ -1,165 +1,78 @@
-import datetime, sys, io, contextlib
+import datetime
 from fcmlib import FCM
 from fcmapi.templates import *
-from flask import Flask, session, redirect, url_for, request
+from fcmapi.auxiliary import *
+from flask import Flask, make_response, redirect, url_for, request
 
 #create service application
 app = Flask(__name__)
 
-#app secret key - keep this really secret:
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT' #TODO - use generator or file
-
-#service index
-@app.route("/")
-def index():
-    return index_template
-
-#-CLIENT-SIDE-API-----------------------------------------------#
-    
-@app.route('/cs/')
-def cs_index():
-    if 'client_name' in session:
-        return cs_index_template.replace("{R}",session['client_name'])
-    return redirect(url_for('cs_login'))
-
-@app.route('/cs_login/', methods=['GET', 'POST'])
-def cs_login():
-    if request.method == 'POST':
-        map=FCM()
-        map.name=request.form['mapname']
-        session['client_map'] = map.serialize()
-        session['client_name'] = map.name
-        return redirect(url_for('cs_index')+session['client_name'])
-    return cs_maplogin_template
-
-@app.route('/cs_logout/')
-def cs_logout():
-    # remove the map from the session if it's there
-    session.pop('client_map', None)
-    session.pop('client_name', None)
-    return redirect(url_for('cs_index'))
-
-@app.route('/cs/<mapname>/')
-def cs_session(mapname):
-    if 'client_name' in session and session['client_name']==mapname:
-        return cs_session_template.replace("{R}",session['client_name'])
-    if 'client_name' not in session:
-        return redirect(url_for('cs_login'))
-    return cs_missing_template.replace("{R1}",mapname).replace("{R2}",session['client_name'])
-
-@app.route('/cs/<mapname>/execute/<command>')
-def cs_process(mapname,command):
-    if 'client_name' in session and session['client_name']==mapname:
-        #processing start time
-        st=datetime.datetime.now()
-        #secure command (no underlines)
-        cmd=command.replace("_","")
-        #fix dictionary in JSON object (if any)
-        cmd=cmd.replace('"dict":','"__dict__":')
-        #create FCM object
-        _map_=FCM(session['client_map'])
-        #use FCM object in command
-        cmd=cmd.replace(session['client_name'],"_map_")
-        #execute secured command
-        response=execute(_map_,cmd)
-        response=response.replace("_map_",session['client_name'])
-        #update client FCM cookie
-        session['client_map']=_map_.serialize()
-        #processing end time
-        et=datetime.datetime.now()
-        #processing duration (ms)
-        dt=(et-st).total_seconds()*1000
-        #generate response
-        ret=">>> "+command+"\n"
-        ret+="-------------------------------------\n"
-        ret+=response
-        ret+="-------------------------------------\n"
-        ret+="Processed in "+str(dt)+"ms."
-        ret="<pre style='white-space:pre-wrap;'>"+ret+"</pre>"
-        return ret
-    if 'client_name' not in session:
-        return redirect(url_for('cs_login'))
-    return cs_missing_template.replace("{R1}",mapname).replace("{R2}",session['client_name'])
-    
-@app.route('/cs/<mapname>/cli/', methods=['GET', 'POST'])
-def cs_webcli(mapname):
-    if 'client_name' in session and session['client_name']==mapname:
-        if request.method == 'POST' and 'command' in request.form:
-            command=request.form['command']
-            return webcli_template.replace("{R1}",href_for('cs_index')+mapname+"/cli/").replace("{R2}",cs_process(mapname,command))
-        return webcli_template.replace("{R1}",href_for('cs_index')+mapname+"/cli/").replace("{R2}","")
-    if 'client_name' not in session:
-        return redirect(url_for('cs_login'))
-    return cs_missing_template.replace("{R1}",mapname).replace("{R2}",session['client_name'])
-    
-@app.route('/cs/<mapname>/serialize/')
-def cs_serialize(mapname):
-    if 'client_name' in session and session['client_name']==mapname:
-        _map_=FCM(session['client_map'])
-        return _map_.serialize()
-    if 'client_name' not in session:
-        return redirect(url_for('cs_login'))
-    return cs_missing_template.replace("{R1}",mapname).replace("{R2}",session['client_name'])
+#initialize service maps
+_maps_  = {}
+_saver_ = SaveHandler()
+for file, data in _saver_.load().items():
+    map=FCM(data)
+    _maps_[map.name]=map
 
 #-SERVER-SIDE-API-----------------------------------------------#
-
-ss_maps={}
     
-@app.route('/ss/', methods=['GET', 'POST'])
-def ss_index():
+@app.route('/', methods=['GET', 'POST'])
+def index():
     if request.method == 'POST':
         #work with existing FCM
         if 'name' in request.form:
             mapname = request.form['name']
-            if mapname in ss_maps:
-                return redirect(url_for('ss_index')+mapname)
-            return ss_missing_template.replace("{R}",mapname)
+            if mapname in _maps_:
+                return redirect(url_for('index')+mapname)
+            return missing_template.replace("{R}",mapname)
         #create new FCM
         if 'logname' in request.form:
             mapname = request.form['logname']
-            return redirect(url_for('ss_index')+mapname+"/login/")
+            return redirect(url_for('index')+mapname+"/login/")
         #delete existing FCM
         if 'remname' in request.form:
             mapname = request.form['remname']
-            return redirect(url_for('ss_index')+mapname+"/logout/")
+            return redirect(url_for('index')+mapname+"/logout/")
         #get FCM as JSON
         if 'getname' in request.form:
             mapname = request.form['getname']
-            return redirect(url_for('ss_index')+mapname+"/serialize/")
+            return redirect(url_for('index')+mapname+"/serialize/")
         #command line interface
         if 'cliname' in request.form:
             mapname = request.form['cliname']
-            return redirect(url_for('ss_index')+mapname+"/cli/")
-    return ss_index_template
+            return redirect(url_for('index')+mapname+"/cli/")
+        #graphical user interface
+        if 'guiname' in request.form:
+            mapname = request.form['guiname']
+            return redirect(url_for('index')+mapname+"/gui/")
+    return index_template
 
-@app.route('/ss/<mapname>/login/', methods=['GET', 'POST'])
-def ss_login(mapname):
-    if request.method == 'POST':
-        ss_maps[mapname]=FCM()
-        ss_maps[mapname].name=mapname
-        return redirect(url_for('ss_index')+mapname)
-    if mapname not in ss_maps:
-        ss_maps[mapname]=FCM()
-        ss_maps[mapname].name=mapname
-        return redirect(url_for('ss_index')+mapname)
-    return ss_maplogin_template.replace("{R}",mapname)
+@app.route('/<mapname>/login/', methods=['GET', 'POST'])
+def login(mapname):
+    if (mapname not in _maps_) or (request.method == 'POST'):
+        _maps_[mapname]=FCM()
+        _maps_[mapname].name=mapname
+        _saver_.save(mapname+".json",_maps_[mapname].serialize(2))
+        return redirect(url_for('index')+mapname)
+    return maplogin_template.replace("{R}",mapname)
         
-@app.route('/ss/<mapname>/logout/')
-def ss_logout(mapname):
+@app.route('/<mapname>/logout/')
+def logout(mapname):
     # remove the map from the list if it's there
-    ss_maps.pop(mapname, None)
-    return redirect(url_for('ss_index'))
+    if mapname in _maps_:
+        _maps_.pop(mapname)
+        _saver_.delete(mapname+".json")
+    return redirect(url_for('index'))
     
-@app.route('/ss/<mapname>/')
-def ss_session(mapname):
-    print("session")
-    if mapname in ss_maps:
-        return ss_session_template.replace("{R}",mapname)
-    return ss_missing_template.replace("{R}",mapname)
+@app.route('/<mapname>/')
+def session(mapname):
+    if mapname in _maps_:
+        return session_template.replace("{R}",mapname)
+    return missing_template.replace("{R}",mapname)
     
-@app.route('/ss/<mapname>/execute/<command>')
-def ss_process(mapname,command):
-    if mapname in ss_maps:
+@app.route('/<mapname>/execute/<command>')
+def process(mapname,command):
+    if mapname in _maps_:
         #processing start time
         st=datetime.datetime.now()
         #secure command (no underlines)
@@ -167,12 +80,21 @@ def ss_process(mapname,command):
         #fix dictionary in JSON object (if any)
         cmd=cmd.replace('"dict":','"__dict__":')
         #get FCM object
-        _map_=ss_maps[mapname]
+        _map_=_maps_[mapname]
         #use FCM object in command
         cmd=cmd.replace(mapname,"_map_")
         #execute secured command
-        response=execute(_map_,cmd)
+        response=execute(_map_,cmd,app)
         response=response.replace("_map_",mapname)
+        #fix map name (if changed to _map_)
+        if _map_.name=="_map_":
+            _map_.name=mapname
+        #rename on server (if renamed)
+        if _map_.name != mapname:
+            _maps_[_map_.name]=_maps_.pop(mapname)
+            _saver_.delete(mapname+".json")
+        #save map on server
+        _saver_.save(_map_.name+".json",_map_.serialize(2))
         #processing end time
         et=datetime.datetime.now()
         #processing duration (ms)
@@ -185,80 +107,41 @@ def ss_process(mapname,command):
         ret+="Processed in "+str(dt)+"ms."
         ret="<pre style='white-space:pre-wrap;'>"+ret+"</pre>"
         return ret
-    return ss_missing_template.replace("{R}",mapname)
+    return missing_template.replace("{R}",mapname)
     
-@app.route('/ss/<mapname>/cli/', methods=['GET', 'POST'])
-def ss_webcli(mapname):
-    if mapname not in ss_maps:
-        return ss_missing_template.replace("{R}",mapname)
+@app.route('/<mapname>/cli/', methods=['GET', 'POST'])
+def webcli(mapname):
+    if mapname not in _maps_:
+        return missing_template.replace("{R}",mapname)
     if request.method == 'POST' and 'command' in request.form:
         command=request.form['command']
-        return webcli_template.replace("{R1}",href_for('ss_index')+mapname+"/cli/").replace("{R2}",ss_process(mapname,command))
-    return webcli_template.replace("{R1}",href_for('ss_index')+mapname+"/cli/").replace("{R2}","")
+        return webcli_template.replace("{R1}",href_for(url_for('index')+mapname)+"/cli/").replace("{R2}",process(mapname,command))
+    return webcli_template.replace("{R1}",href_for(url_for('index')+mapname)+"/cli/").replace("{R2}","")
     
-@app.route('/ss/<mapname>/serialize/')
-def ss_serialize(mapname):
-    if mapname in ss_maps:
-        return ss_maps[mapname].serialize()
-    return ss_missing_template.replace("{R}",mapname)
+@app.route('/<mapname>/gui/')
+def webgui(mapname):
+    if mapname not in _maps_:
+        return missing_template.replace("{R}",mapname)
+    return webgui_template.replace("{R1}",url_for('index')+mapname+"/cli/").replace("{R2}",_maps_[mapname].serialize(indent=0));
+
+@app.route('/<mapname>/gui/d3.v3.min.js')
+def serve_d3_js(mapname):
+    return d3_template;
     
-@app.route('/ss_list/')
-def ss_list():
+@app.route('/<mapname>/serialize/')
+def serialize(mapname):
+    if mapname in _maps_:
+        return _maps_[mapname].serialize()
+    return missing_template.replace("{R}",mapname)
+    
+@app.route('/list/')
+def list():
     ret=""
-    for m in ss_maps:
-        lnk=url_for('ss_index')+m
+    for m in _maps_:
+        lnk=url_for('index')+m
         ret+="<a href='"+lnk+"'>"+lnk+"</a><br/>"
     if ret=="": return "None"
     return ret
-
-#-AUXILIARY----------------------------------------------------#
-
-#execute command (with specified map)
-def execute(_map_,cmd):
-    #disable interactive help
-    cmd=cmd.replace("help()","help")
-    #run command normally
-    with stdoutIO() as s:
-        #catch and return errors when not debugging
-        if not app.debug:
-            try:
-                try:
-                    response=str(eval(cmd,{'__builtins__': {"print":print},"dir":dir,"help":help},{"_map_":_map_}))+"\n"
-                    if response=="None\n": response=s.getvalue()
-                except SyntaxError:
-                    exec(cmd,{'__builtins__': {"print":print},"dir":dir,"help":help},{"_map_":_map_})
-                    response=s.getvalue()
-                if response=="":
-                    response=str(_map_)+"\n"
-            except BaseException as error:
-                print("Error:", error)
-                response=s.getvalue()
-        #do not catch errors when debugging since Flask will show full error traceback
-        else:
-            try:
-                response=str(eval(cmd,{'__builtins__': {"print":print,"dir":dir,"help":help}},{"_map_":_map_}))+"\n"
-                if response=="None\n": response=s.getvalue()
-            except SyntaxError:
-                exec(cmd,{'__builtins__': {"print":print,"dir":dir,"help":help}},{"_map_":_map_})
-                response=s.getvalue()
-            if response=="":
-                response=str(_map_)+"\n"
-    return response
-    
-#web output context manager
-@contextlib.contextmanager
-def stdoutIO(stdout=None):
-    old = sys.stdout
-    if stdout is None:
-        stdout = io.StringIO()
-    sys.stdout = stdout
-    yield stdout
-    sys.stdout = old
-    
-#link generator
-def href_for(s):
-    l=url_for(s)
-    return "<a href='"+l+"'>"+l+"</a>"
 
 #--------------------------------------------------------------#
 

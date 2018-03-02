@@ -1,9 +1,2 @@
-save server-side maps to file
-https://stackoverflow.com/questions/847850/cross-platform-way-of-getting-temp-directory-in-python
-
-create async worker
-
+add proper D3 licensing https://d3js.org/
 improve relations api
-
-javascript GUI - based on D3
-https://d3js.org/

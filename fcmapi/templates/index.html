@@ -16,10 +16,52 @@
     Welcome to FCM service:<br/>
     <br/>
     Options:<br/>
-    1. Server-side FCM API (faster) at <a href="/ss">/ss</a><br/>
-    2. Client-side FCM API (slower) at <a href="/cs">/cs</a><br/>
-    <br/>
-    Note:<br/>
-    Client side implementation uses Cookies, hence in order to use it, you must accept to store Cookies on your PC.
+        <form method="post" onsubmit='return validate("name")'>
+        1. Work with existing FCM at /<input type="text" name="name" placeholder="name" value="" onkeyup="update('name')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/
+        </form>
+        <form method="post" onsubmit='return validate("logname")'>
+        2. Create new FCM at /<input type="text" name="logname" placeholder="name" value="" onkeyup="update('logname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/login/
+        </form>
+        <form method="post" onsubmit='return validate("remname")'>
+        3. Delete existing FCM at /<input type="text" name="remname" placeholder="name" value="" onkeyup="update('remname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/logout/
+        </form>
+        <form method="post" onsubmit='return validate("getname")'>
+        4. Get existing FCM as JSON at /<input type="text" name="getname" placeholder="name" value="" onkeyup="update('getname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/serialize/
+        </form>
+        <form method="post" onsubmit='return validate("cliname")'>
+        5. Command line interface (CLI) at /<input type="text" name="cliname" placeholder="name" value="" onkeyup="update('cliname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/cli/
+        </form>
+        <form method="post" onsubmit='return validate("guiname")'>
+        6. Graphical user interface (GUI) at /<input type="text" name="guiname" placeholder="name" value="" onkeyup="update('guiname')" style="display:inline-block;border-width:0px;border:none;width:5ch;">/gui/
+        </form>
+        7. View all server-side FCMs at <a href="/list/">/list/</a>
+    
+    <script>
+        function validate(name) {
+            var t = document.getElementsByName(name)[0].value;
+            if (t=="") {
+                alert("Enter FCM name!");
+                return false;
+            }
+            if (t.length<4) {
+                alert("Enter name with at least 4 characters!");
+                return false;
+            }
+            if (/[^a-zA-Z0-9]/.test(t)) {
+                alert("Only alfanumeric characters are permitted!\nDo not use spaces or special characters!");
+                return false;
+            }
+            return true;
+        }
+        function update(name) {
+            var e = document.getElementsByName(name)[0];
+            var t = e.value.length
+            if (t>4)
+                e.style.width = String(t+1)+"ch";
+            else
+                e.style.width = 5;
+            return true;
+        }
+    </script>
 </body>
 </html>

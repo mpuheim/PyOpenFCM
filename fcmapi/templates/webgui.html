@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="OpenFCM webapi">
+  <title>OpenFCM webapi</title>
+  <script src="d3.v3.min.js" charset="utf-8"></script> <!-- loaded from local server -->
+  <style type="text/css">
+    html, body {
+        height: 100vh;
+        width: 100vw;
+        margin: 0;
+        padding: 0;
+    }
+    #cli, #opt, #chart{
+        border: 2px solid;
+        margin: 4px;
+        padding: 4px;
+    }
+    #cliframe {
+        border: none;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+    }
+    #nav {
+        float: left;
+        width: 40%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    #opt {
+        height: 30px;
+    }
+    #cli {
+        height: calc(100% - 66px);
+    }
+    #chart {
+        width: calc(60% - 20px);
+        height: calc(100% - 20px);
+        float: right;
+    }
+    .control {
+        height: 30px;
+        width: 30%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id='nav'>
+    <div id='opt'>
+      <input class="control" type="submit" value="Update" onclick="update()"/>
+    </div>
+    <div id='cli'>
+      <iframe src='{R1}' id = "cliframe" onload="focuscli()"></iframe>
+    </div>
+  </div>
+  <div id='chart'></div>  
+
+  <script type="text/javascript">
+  
+    function update() {
+        location.reload();
+    }
+  
+    function focuscli() {
+        var iframe = document.getElementById("cliframe");
+        var commandline = iframe.contentWindow.document.getElementsByName("command");
+        if (commandline[0])
+            commandline[0].focus();
+    }
+  
+    function pixelSize(str) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext("2d");
+        ctx.font = fontSize+" "+fontType;        
+        var charWidth = ctx.measureText(str).width;
+        var charHeight = parseInt(ctx.font);
+        return [charWidth,charHeight];
+    }
+    
+    function optimalSize(nodes) {
+        if (!nodes || nodes.length==0)
+            return 10;
+        var longest = nodes[0];
+        var i,current,len_long,len_curr;
+        len_long = (longest.name+longest.data).length;
+        for (i in nodes) {
+            current = nodes[i];
+            len_curr = (current.name+current.data).length;
+            if (len_curr > len_long) {
+                longest = current;
+                len_long = len_curr;
+            }
+        }
+        return pixelSize(longest.name+":"+longest.data)
+    }
+    
+    function prepareDataset(fcmjson) {
+        var json = JSON.parse(fcmjson);
+        var concepts = d3.entries(json).slice(1,-1);
+        var relations = d3.entries(json["__dict__"]["relations"]);
+        //document.write('<br/>ORIGINAL:<br/>');
+        //document.write(jsonString);
+        //document.write('<br/>CONCEPTS:<br/>');
+        //document.write(JSON.stringify(concepts).replace(new RegExp('{"key', 'g'), '<br/>{"key'));
+        //document.write('<br/>RELATIONS:<br/>');
+        //document.write(JSON.stringify(relations).replace(new RegExp('{"key', 'g'), '<br/>{"key'));
+        var nodes=[]; var indices={}; var edges=[];
+        var i,j,k,r,c,n,v;
+        for (i in concepts) {
+            c = concepts[i];
+            n = c["key"];
+            v = c["value"]["value"];
+            nodes.push({name: n,data: v});
+            indices[n] = parseInt(i);
+        }
+        //document.write('<br/>NODES:<br/>');
+        //document.write(JSON.stringify(nodes).replace(new RegExp(',', 'g'), ',<br/>'));
+        var connections; var weights;
+        var source_n; var target_n;
+        var source_i; var target_i;
+        var weight;
+        for (j in relations) {
+            r = relations[j];
+            connections = r["value"]["previousnames"];
+            weights = r["value"]["weights"];
+            target_n = r["key"];
+            target_i = indices[target_n];
+            for (k in connections) {
+                source_n = connections[k];
+                source_i = indices[source_n];
+                weight = weights[k];
+                edges.push({source: source_i, target: target_i, source_name: source_n, target_name: target_n, data: weight});
+            }
+        }
+        //document.write('<br/>EDGES:<br/>');
+        //document.write(JSON.stringify(edges).replace(new RegExp('},', 'g'), '},<br/>'));
+        var dataset = {nodes,edges};
+        //document.write(JSON.stringify(dataset).replace(new RegExp('},', 'g'), '},<br/>').replace(new RegExp('\\[', 'g'), '[<br/>').replace(new RegExp('\\],', 'g'), '],<br/>'));
+        return dataset;
+    }
+    
+    /* CONFIGURATION */
+    var w = document.getElementById("chart").clientWidth-20;
+    var h = document.getElementById("chart").clientHeight-20;
+    var colors = d3.scale.category10();
+    var fontSize="12px";
+    var fontType="Calibri";
+
+    /* PREPARATION */
+    var jsonString = '{R2}' //this value will be changed by server
+    var dataset = prepareDataset(jsonString);
+    var nodesize = optimalSize(dataset.nodes);
+    var noderadius = Math.ceil(nodesize[0]/2);
+    var nodediff = Math.ceil(nodesize[1]/2);
+    var linkDistance = 4*noderadius;
+    
+    /* DRAW MAP */
+    var svg = d3.select("#chart").append("svg").attr({"width":w,"height":h});
+
+    var force = d3.layout.force()
+        .nodes(dataset.nodes)
+        .links(dataset.edges)
+        .size([w,h])
+        .linkDistance([linkDistance])
+        .charge([-500])
+        .theta(0.1)
+        .gravity(0.05)
+        .start();
+
+    var edges = svg.selectAll("line")
+      .data(dataset.edges)
+      .enter()
+      .append("line")
+      .attr("id",function(d,i) {return 'edge'+i})
+      .attr('marker-end','url(#arrowhead)')
+      .style("stroke","#ccc")
+      .style("pointer-events", "none");
+    
+    var nodes = svg.selectAll("circle")
+      .data(dataset.nodes)
+      .enter()
+      .append("circle")
+      .attr({"r":5+noderadius})
+      .style("fill",function(d,i){return colors(i);})
+      .call(force.drag)
+
+    var nodelabels = svg.selectAll(".nodelabel") 
+       .data(dataset.nodes)
+       .enter()
+       .append("text")
+       .attr({"x":function(d){return d.x-Math.ceil(pixelSize(d.name+":"+d.data)[0]/2);},
+              "y":function(d){return d.y+nodediff;},
+              "class":"nodelabel",
+              "font-size":fontSize,
+              "font-family":fontType,
+              "stroke":"black"})
+       .text(function(d){return d.name+':'+d.data;});
+
+    var edgepaths = svg.selectAll(".edgepath")
+        .data(dataset.edges)
+        .enter()
+        .append('path')
+        .attr({'d': function(d) {return 'M '+d.source.x+' '+d.source.y+' L '+ d.target.x +' '+d.target.y},
+               'class':'edgepath',
+               'fill-opacity':0,
+               'stroke-opacity':0,
+               'fill':'blue',
+               'stroke':'red',
+               'id':function(d,i) {return 'edgepath'+i}})
+        .style("pointer-events", "none");
+
+    var edgelabels = svg.selectAll(".edgelabel")
+        .data(dataset.edges)
+        .enter()
+        .append('text')
+        .style("pointer-events", "none")
+        .attr({'class':'edgelabel',
+               'id':function(d,i){return 'edgelabel'+i},
+               'dx':Math.ceil(linkDistance/2),
+               'dy':0,
+               'font-size':fontSize,
+               "font-family":fontType,
+               'fill':'#aaa'});
+
+    edgelabels.append('textPath')
+        .attr('xlink:href',function(d,i) {return '#edgepath'+i})
+        .style("pointer-events", "none")
+        .text(function(d){return d.data});
+
+    svg.append('defs').append('marker')
+        .attr({'id':'arrowhead',
+               'viewBox':'-0 -5 10 10',
+               'refX':noderadius+5+10,
+               'refY':0,
+               //'markerUnits':'strokeWidth',
+               'orient':'auto',
+               'markerWidth':10,
+               'markerHeight':10,
+               'xoverflow':'visible'})
+        .append('svg:path')
+            .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+            .attr('fill', '#ccc')
+            .attr('stroke','#ccc');
+
+    force.on("tick", function(){
+
+        edges.attr({"x1": function(d){return d.source.x;},
+                    "y1": function(d){return d.source.y;},
+                    "x2": function(d){return d.target.x;},
+                    "y2": function(d){return d.target.y;}
+        });
+
+        nodes.attr({"cx":function(d){return d.x;},
+                    "cy":function(d){return d.y;}
+        });
+
+        nodelabels.attr("x", function(d) { return d.x-Math.ceil(pixelSize(d.name+":"+d.data)[0]/2); }) 
+                  .attr("y", function(d) { return d.y+nodediff; });
+
+        edgepaths.attr('d', function(d) { var path='M '+d.source.x+' '+d.source.y+' L '+ d.target.x +' '+d.target.y;
+                                           //console.log(d)
+                                           return path});       
+
+        edgelabels.attr('transform',function(d,i){
+            if (d.target.x<d.source.x){
+                bbox = this.getBBox();
+                rx = bbox.x+bbox.width/2;
+                ry = bbox.y+bbox.height/2;
+                return 'rotate(180 '+rx+' '+ry+')';
+                }
+            else {
+                return 'rotate(0)';
+                }
+        });
+    });
+    
+  </script>
+</body>
+</html>

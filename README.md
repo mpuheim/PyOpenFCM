@@ -3,14 +3,14 @@ Python Open Fuzzy Cognitive Maps Library (with Web API)
 
 Depedencies:  
 - Python 3.6  
+- pip, git  
 - flask, jsonpickle  
-- git  
 
 Fast install & run Web API on Windows:  
 - install GIT from https://git-scm.com/download/win
 - download & extract repository ZIP archive  
 - run 'setup.bat' as admin  
-- run 'fcmapi/fcmapi_service.bat'    
+- open CMD and run 'fcmapi_service'  
 - open browser on http://localhost:5000/  
 
 Install on other systems:
