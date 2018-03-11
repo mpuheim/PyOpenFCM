@@ -122,11 +122,15 @@ def webcli(mapname):
 def webgui(mapname):
     if mapname not in _maps_:
         return missing_template.replace("{R}",mapname)
-    return webgui_template.replace("{R1}",url_for('index')+mapname+"/cli/").replace("{R2}",_maps_[mapname].serialize(indent=0));
-
-@app.route('/<mapname>/gui/d3.v3.min.js')
-def serve_d3_js(mapname):
-    return d3_template;
+    ret=webgui_template
+    ret=ret.replace("{R1}",url_for('index')+mapname+"/cli/")
+    ret=ret.replace("{R2}",url_for('index')+mapname+"/serialize/")
+    ret=ret.replace("{R3}",_maps_[mapname].serialize(indent=0))
+    return ret;
+    
+@app.route('/<mapname>/gui/d3.v4.min.js')
+def serve_d3v4_js(mapname):
+    return d3v4_template;
     
 @app.route('/<mapname>/serialize/')
 def serialize(mapname):

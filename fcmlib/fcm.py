@@ -126,6 +126,9 @@ class FCM(dict):
         elif not name in self:
             raise Exception("Error - there is no concept with name to be removed")
         else:
+            for concept in self:
+                if name in [x.name for x in self[concept].relation.previous]:
+                    self[concept].relation.detach(self[name])
             del self[name]
             
     def rename(self, currentname, newname):

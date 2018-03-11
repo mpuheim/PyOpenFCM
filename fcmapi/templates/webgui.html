@@ -5,7 +5,53 @@
   <meta charset="utf-8">
   <meta name="description" content="OpenFCM webapi">
   <title>OpenFCM webapi</title>
-  <script src="d3.v3.min.js" charset="utf-8"></script> <!-- loaded from local server -->
+  
+  <script type="text/javascript">
+    
+    function exitgui() {
+        location.replace("/");
+    }
+    
+    function reload() {
+        location.reload();
+    }
+  
+    function focuscli() {
+        var iframe = document.getElementById("cliframe");
+        var commandline = iframe.contentWindow.document.getElementsByName("command");
+        if (commandline[0]) commandline[0].focus();
+    }
+    
+    function request(url,success,failure)
+    {
+      var request = makeHttpObject();
+      request.open("GET", url, true);
+      request.send(null);
+      request.onreadystatechange = function()
+      {
+        if (request.readyState == 4)
+        {
+          if (request.status == 200)
+            success(request.responseText);
+          else if (failure)
+            failure(request.status, request.statusText);
+        }
+      }
+    }
+    
+    function makeHttpObject()
+    {
+      try {return new XMLHttpRequest();}
+      catch (error) {}
+      try {return new ActiveXObject("Msxml2.XMLHTTP");}
+      catch (error) {}
+      try {return new ActiveXObject("Microsoft.XMLHTTP");}
+      catch (error) {}
+      throw new Error("Could not create HTTP request object.");
+    }
+    
+  </script>
+  
   <style type="text/css">
     html, body {
         height: 100vh;
@@ -45,7 +91,7 @@
     }
     .control {
         height: 30px;
-        width: 30%;
+        width: calc(33% - 3px);
     }
   </style>
 </head>
@@ -53,7 +99,9 @@
 <body>
   <div id='nav'>
     <div id='opt'>
-      <input class="control" type="submit" value="Update" onclick="update()"/>
+      <input id='ExitButton' class="control" type="submit" value="Exit GUI" onclick="exitgui()"/>
+      <input id='ReloadButton' class="control" type="submit" value="Reload GUI" onclick="reload()"/>
+      <input id='PauseButton' class="control" type="submit" value="Disable Update" onclick="toggleupdate()"/>
     </div>
     <div id='cli'>
       <iframe src='{R1}' id = "cliframe" onload="focuscli()"></iframe>
@@ -61,45 +109,187 @@
   </div>
   <div id='chart'></div>  
 
+  <script src="d3.v4.min.js" charset="utf-8"></script> <!-- loaded from local server -->
   <script type="text/javascript">
-  
-    function update() {
-        location.reload();
+
+    /*---DRAW-MAP-------------------------*/
+    
+    //configure chart size
+    var width = document.getElementById("chart").clientWidth-20;
+    var height = document.getElementById("chart").clientHeight-20;
+
+    //prepare data
+    var jsonString = '{R3}';
+    var nodedict = {}
+    var dataset = prepareDataset(jsonString);
+    var nodes=dataset.nodes;
+    var links=dataset.links;
+
+    //configure node size
+    var fontSize="12px";
+    var fontType="Calibri";
+    var decimals=2
+    var nodesize = optimalSize(dataset.nodes);
+    var noderadius = Math.ceil(nodesize[0]/2);
+    var nodediff = Math.ceil(nodesize[1]/2);
+    var linkDistance = 4*noderadius;
+
+    //map svg chart to d3 control
+    var svg = d3.select("#chart").append("svg").attr("width",width).attr("height",height),
+        color = d3.scaleOrdinal(d3.schemeCategory10),
+        interact = false;
+        paused = false;
+
+    //setup d3 simulation
+    var simulation = d3.forceSimulation(nodes)
+        .force("charge", d3.forceManyBody().strength(-3*linkDistance))
+        .force("link", d3.forceLink(links).id(function(d) { return d.id; }).distance(linkDistance))
+        .force("x", d3.forceX())
+        .force("y", d3.forceY())
+        .alphaTarget(1)
+        .on("tick", ticked);
+
+    //map chart elements to d3 simulation
+    var g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")"),
+        link = g.append("g").attr("stroke", "#aaa").attr("stroke-width", 1).selectAll(".link"),
+        node = g.append("g").attr("stroke", "#000").attr("stroke-width", 1).selectAll(".node"),
+        linklabel = g.append("g").attr("font-size", fontSize).attr("font-family", fontType).attr("stroke", "#000").style("pointer-events", "none").selectAll(".linklabel"),
+        nodelabel = g.append("g").attr("font-size", fontSize).attr("font-family", fontType).attr("stroke", "#000").style("pointer-events", "none").selectAll(".nodelabel"),
+        marker = g.append('defs')
+                    .append('marker').attr('id', 'arrowhead')
+                                     .attr('viewBox', '-0 -5 10 10')
+                                     .attr('refX', noderadius+10)
+                                     .attr('refY', 0)
+                                     .attr('orient', 'auto')
+                                     .attr('markerWidth', 10)
+                                     .attr('markerHeight', 10)
+                                     .attr('xoverflow', 'visible')
+                    .append('svg:path').attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+                                       .attr('fill', '#aaa')
+                                       .attr('stroke','#aaa');
+
+    //start simulation
+    restart();
+
+    //---FUNCTIONS----------------------------------//
+    
+    d3.interval(function() {
+      if (!paused) request('{R2}',update)
+    }, 2000, d3.now());
+
+    function restart() {
+
+      // Apply the general update pattern to the nodes.
+      node = node.data(nodes, function(d) { return d.id;});
+      node.exit().remove();
+      node = node.enter()
+                 .append("circle")
+                 .attr("fill", function(d) { return color(d.id); })
+                 .attr("r", noderadius)
+                 .merge(node);
+      
+      // Apply the general update pattern to the node labels.
+      nodelabel = nodelabel.data(nodes, function(d) { return d.id;});
+      nodelabel.exit().remove();
+      nodelabel = nodelabel.enter()
+                           .append("text")
+                           .merge(nodelabel)
+                           .text(function(d){return d.id+':'+Number(d.data).toFixed(decimals);});
+
+      // Apply the general update pattern to the links.
+      link = link.data(links, function(d) { return d.source.id + "-" + d.target.id; });
+      link.exit().remove();
+      link = link.enter()
+                 .append("path")
+                 .style("marker-end", "url(#arrowhead)")
+                 .merge(link);
+      
+      // Apply the general update pattern to the link labels.
+      linklabel = linklabel.data(links, function(d) { return d.source.id + "-" + d.target.id; });
+      linklabel.exit().remove();
+      linklabel = linklabel.enter()
+                           .append("text")
+                           .merge(linklabel)
+                           .text(function(d){return (isNaN(d.data)) ? d.data : Number(d.data).toFixed(decimals);});
+
+      // Update and restart the simulation.
+      node.call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+      nodelabel.call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+      simulation.nodes(nodes);
+      simulation.force("link").links(links);
+      simulation.alphaTarget(0.2);
+      simulation.alpha(0.2).restart();
+      
+      // Set link coordinates to correct position
+      link.attr('d', function(d) { return 'M '+d.source.x+' '+d.source.y+' L '+ d.target.x +' '+d.target.y;});   
+          
+      linklabel.attr("x", function(d) { return (d.source.x+d.target.x)/2-(pixelSize((isNaN(d.data)) ? d.data : Number(d.data).toFixed(decimals))[0])/2; })
+               .attr("y", function(d) { return (d.source.y+d.target.y)/2; })
     }
-  
-    function focuscli() {
-        var iframe = document.getElementById("cliframe");
-        var commandline = iframe.contentWindow.document.getElementsByName("command");
-        if (commandline[0])
-            commandline[0].focus();
+
+    function dragstarted(d) {
+      if (!d3.event.active) simulation.alphaTarget(0.5).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+      interact = true;
     }
-  
-    function pixelSize(str) {
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext("2d");
-        ctx.font = fontSize+" "+fontType;        
-        var charWidth = ctx.measureText(str).width;
-        var charHeight = parseInt(ctx.font);
-        return [charWidth,charHeight];
+
+    function dragged(d) {
+      d.fx = d3.event.x;
+      d.fy = d3.event.y;
+    }
+
+    function dragended(d, i) {
+      if (!d3.event.active) simulation.alphaTarget(0.2);
+      d.fx = null;
+      d.fy = null;
+      interact = false;
     }
     
-    function optimalSize(nodes) {
-        if (!nodes || nodes.length==0)
-            return 10;
-        var longest = nodes[0];
-        var i,current,len_long,len_curr;
-        len_long = (longest.name+longest.data).length;
-        for (i in nodes) {
-            current = nodes[i];
-            len_curr = (current.name+current.data).length;
-            if (len_curr > len_long) {
-                longest = current;
-                len_long = len_curr;
-            }
+    function toggleupdate() {
+        if (paused == true)
+            document.getElementById("PauseButton").value="Disable Update"
+        else
+            document.getElementById("PauseButton").value="Enable Update"
+        paused=!paused
+    }
+    
+    function update(newmap) {
+        if (interact)
+            return;
+        var i;
+        dataset = prepareDataset(newmap);
+        nodes.length = 0;
+        links.length = 0;
+        for (i in dataset.nodes) {
+            nodes.push(dataset.nodes[i]);
         }
-        return pixelSize(longest.name+":"+longest.data)
+        for (i in dataset.links) {
+            links.push(dataset.links[i]);
+        }
+        restart();
     }
-    
+
+
+    function ticked() {
+      node.attr("cx", function(d) { nodedict[d.id].x=d.x; return d.x; })
+          .attr("cy", function(d) { nodedict[d.id].y=d.y; return d.y; })
+          
+      nodelabel.attr("x", function(d) { return d.x-pixelSize(d.id+":"+Number(d.data).toFixed(decimals))[0]/2; })
+               .attr("y", function(d) { return d.y+nodediff; });
+
+      link.attr('d', function(d) { return 'M '+d.source.x+' '+d.source.y+' L '+ d.target.x +' '+d.target.y;});   
+          
+      linklabel.attr("x", function(d) { return (d.source.x+d.target.x)/2-(pixelSize((isNaN(d.data)) ? d.data : Number(d.data).toFixed(decimals))[0])/2; })
+               .attr("y", function(d) { return (d.source.y+d.target.y)/2; })
+    }
+
     function prepareDataset(fcmjson) {
         var json = JSON.parse(fcmjson);
         var concepts = d3.entries(json).slice(1,-1);
@@ -110,175 +300,73 @@
         //document.write(JSON.stringify(concepts).replace(new RegExp('{"key', 'g'), '<br/>{"key'));
         //document.write('<br/>RELATIONS:<br/>');
         //document.write(JSON.stringify(relations).replace(new RegExp('{"key', 'g'), '<br/>{"key'));
-        var nodes=[]; var indices={}; var edges=[];
         var i,j,k,r,c,n,v;
+        var nodes=[],links=[];
         for (i in concepts) {
             c = concepts[i];
             n = c["key"];
             v = c["value"]["value"];
-            nodes.push({name: n,data: v});
-            indices[n] = parseInt(i);
+            if (n in nodedict) {
+                nodes.push({id: n,
+                            data: v,
+                            x:nodedict[n].x,
+                            y:nodedict[n].y});
+            }
+            else {
+                nodes.push({id: n,
+                            data: v})
+                nodedict[n] = {}
+            nodedict[n].i = parseInt(i);
+            }
         }
         //document.write('<br/>NODES:<br/>');
         //document.write(JSON.stringify(nodes).replace(new RegExp(',', 'g'), ',<br/>'));
         var connections; var weights;
         var source_n; var target_n;
-        var source_i; var target_i;
         var weight;
         for (j in relations) {
             r = relations[j];
             connections = r["value"]["previousnames"];
             weights = r["value"]["weights"];
             target_n = r["key"];
-            target_i = indices[target_n];
             for (k in connections) {
                 source_n = connections[k];
-                source_i = indices[source_n];
                 weight = weights[k];
-                edges.push({source: source_i, target: target_i, source_name: source_n, target_name: target_n, data: weight});
+                links.push({source: source_n, target: target_n, data: weight});
             }
         }
         //document.write('<br/>EDGES:<br/>');
-        //document.write(JSON.stringify(edges).replace(new RegExp('},', 'g'), '},<br/>'));
-        var dataset = {nodes,edges};
+        //document.write(JSON.stringify(links).replace(new RegExp('},', 'g'), '},<br/>'));
+        var dataset = {nodes,links};
         //document.write(JSON.stringify(dataset).replace(new RegExp('},', 'g'), '},<br/>').replace(new RegExp('\\[', 'g'), '[<br/>').replace(new RegExp('\\],', 'g'), '],<br/>'));
         return dataset;
     }
-    
-    /* CONFIGURATION */
-    var w = document.getElementById("chart").clientWidth-20;
-    var h = document.getElementById("chart").clientHeight-20;
-    var colors = d3.scale.category10();
-    var fontSize="12px";
-    var fontType="Calibri";
 
-    /* PREPARATION */
-    var jsonString = '{R2}' //this value will be changed by server
-    var dataset = prepareDataset(jsonString);
-    var nodesize = optimalSize(dataset.nodes);
-    var noderadius = Math.ceil(nodesize[0]/2);
-    var nodediff = Math.ceil(nodesize[1]/2);
-    var linkDistance = 4*noderadius;
-    
-    /* DRAW MAP */
-    var svg = d3.select("#chart").append("svg").attr({"width":w,"height":h});
-
-    var force = d3.layout.force()
-        .nodes(dataset.nodes)
-        .links(dataset.edges)
-        .size([w,h])
-        .linkDistance([linkDistance])
-        .charge([-500])
-        .theta(0.1)
-        .gravity(0.05)
-        .start();
-
-    var edges = svg.selectAll("line")
-      .data(dataset.edges)
-      .enter()
-      .append("line")
-      .attr("id",function(d,i) {return 'edge'+i})
-      .attr('marker-end','url(#arrowhead)')
-      .style("stroke","#ccc")
-      .style("pointer-events", "none");
-    
-    var nodes = svg.selectAll("circle")
-      .data(dataset.nodes)
-      .enter()
-      .append("circle")
-      .attr({"r":5+noderadius})
-      .style("fill",function(d,i){return colors(i);})
-      .call(force.drag)
-
-    var nodelabels = svg.selectAll(".nodelabel") 
-       .data(dataset.nodes)
-       .enter()
-       .append("text")
-       .attr({"x":function(d){return d.x-Math.ceil(pixelSize(d.name+":"+d.data)[0]/2);},
-              "y":function(d){return d.y+nodediff;},
-              "class":"nodelabel",
-              "font-size":fontSize,
-              "font-family":fontType,
-              "stroke":"black"})
-       .text(function(d){return d.name+':'+d.data;});
-
-    var edgepaths = svg.selectAll(".edgepath")
-        .data(dataset.edges)
-        .enter()
-        .append('path')
-        .attr({'d': function(d) {return 'M '+d.source.x+' '+d.source.y+' L '+ d.target.x +' '+d.target.y},
-               'class':'edgepath',
-               'fill-opacity':0,
-               'stroke-opacity':0,
-               'fill':'blue',
-               'stroke':'red',
-               'id':function(d,i) {return 'edgepath'+i}})
-        .style("pointer-events", "none");
-
-    var edgelabels = svg.selectAll(".edgelabel")
-        .data(dataset.edges)
-        .enter()
-        .append('text')
-        .style("pointer-events", "none")
-        .attr({'class':'edgelabel',
-               'id':function(d,i){return 'edgelabel'+i},
-               'dx':Math.ceil(linkDistance/2),
-               'dy':0,
-               'font-size':fontSize,
-               "font-family":fontType,
-               'fill':'#aaa'});
-
-    edgelabels.append('textPath')
-        .attr('xlink:href',function(d,i) {return '#edgepath'+i})
-        .style("pointer-events", "none")
-        .text(function(d){return d.data});
-
-    svg.append('defs').append('marker')
-        .attr({'id':'arrowhead',
-               'viewBox':'-0 -5 10 10',
-               'refX':noderadius+5+10,
-               'refY':0,
-               //'markerUnits':'strokeWidth',
-               'orient':'auto',
-               'markerWidth':10,
-               'markerHeight':10,
-               'xoverflow':'visible'})
-        .append('svg:path')
-            .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
-            .attr('fill', '#ccc')
-            .attr('stroke','#ccc');
-
-    force.on("tick", function(){
-
-        edges.attr({"x1": function(d){return d.source.x;},
-                    "y1": function(d){return d.source.y;},
-                    "x2": function(d){return d.target.x;},
-                    "y2": function(d){return d.target.y;}
-        });
-
-        nodes.attr({"cx":function(d){return d.x;},
-                    "cy":function(d){return d.y;}
-        });
-
-        nodelabels.attr("x", function(d) { return d.x-Math.ceil(pixelSize(d.name+":"+d.data)[0]/2); }) 
-                  .attr("y", function(d) { return d.y+nodediff; });
-
-        edgepaths.attr('d', function(d) { var path='M '+d.source.x+' '+d.source.y+' L '+ d.target.x +' '+d.target.y;
-                                           //console.log(d)
-                                           return path});       
-
-        edgelabels.attr('transform',function(d,i){
-            if (d.target.x<d.source.x){
-                bbox = this.getBBox();
-                rx = bbox.x+bbox.width/2;
-                ry = bbox.y+bbox.height/2;
-                return 'rotate(180 '+rx+' '+ry+')';
-                }
-            else {
-                return 'rotate(0)';
-                }
-        });
-    });
+    function pixelSize(str) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext("2d");
+        ctx.font = fontSize+" "+fontType;        
+        var charWidth = ctx.measureText(str).width;
+        var charHeight = parseInt(ctx.font);
+        return [charWidth,charHeight];
+    }
+        
+    function optimalSize(nodes) {
+        if (!nodes || nodes.length==0)
+            return 10;
+        var longest = nodes[0];
+        var i,current,len_long,len_curr;
+        len_long = (longest.id+Number(longest.data).toFixed(decimals)).length;
+        for (i in nodes) {
+            current = nodes[i];
+            len_curr = (current.id+Number(current.data).toFixed(decimals)).length;
+            if (len_curr > len_long) {
+                longest = current;
+                len_long = len_curr;
+            }
+        }
+        return pixelSize(longest.id+":"+Number(longest.data).toFixed(decimals))
+    }
     
   </script>
 </body>
