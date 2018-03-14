@@ -6,4 +6,4 @@ include fcmapi/templates/session.html
 include fcmapi/templates/missing.html
 include fcmapi/templates/webcli.html
 include fcmapi/templates/webgui.html
-include fcmapi/templates/d3.v3.min.js
+include fcmapi/templates/d3.v4.min.js

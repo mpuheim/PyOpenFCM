@@ -18,6 +18,11 @@ class PiecewiseLinear(IFunction):
         
         self.pieces = []
         
+    def __repr__(self):
+        """Return repr(self)."""
+        r = self.get()
+        return '%s(%s)' % (type(self).__name__, r)
+        
     def info(self):
         """Return basic information about function.
         
@@ -49,7 +54,7 @@ class PiecewiseLinear(IFunction):
         """
         
         # check if any points are provided
-        if (not name) or (not isinstance(name,str)) or (name == ""):
+        if (not params) or (not isinstance(params,str)) or (params == ""):
             raise Exception("Error - params is not string or empty")
         # deserialize params string to points
         points = params.split(" ")
@@ -72,12 +77,12 @@ class PiecewiseLinear(IFunction):
                 raise Exception("Error - deserialization error, wrong order of x-coordinate")
             prev = curr
         # remove duplicite or close points
-        removeDuplicitPoints(pointObjects)
+        self.removeDuplicitPoints(pointObjects)
         # check if there are at least 2 remaining points
         if len(pointObjects) < 2:
             raise Exception("Error - deserialization error, less than 2 remaining points")
         # generate function pieces
-        self.piece = points2pieces(pointObjects)
+        self.piece = self.points2pieces(pointObjects)
         # merge consequent pieces with same slope
         self.simplify()
 
@@ -102,38 +107,6 @@ class PiecewiseLinear(IFunction):
         derivative.simplify()
         # return function derivative
         return derivative
-        
-    def getInverse(self):
-        """Get inverse function.
-        
-        Returns:
-        - PiecewiseLinear function
-        """
-        # declare function object
-        inverse = PiecewiseLinear()
-        # return if function is not set
-        if len(self.piece) == 0:
-            return inverse
-        # get list of points
-        points = self.pieces2points(self.piece);
-        # invert point coordinates
-        for p in points:
-            p.x, p.y = p.y, p.x
-        # generate inverted pieces
-        inverse.piece = self.points2pieces(points);
-        # correct order of start and end points
-        for i in range(len(inverse.piece)):
-            if inverse.piece[i].start.x > inverse.piece[i].end.x:
-                inverse.piece[i] = Piece(inverse.piece[i].end, inverse.piece[i].start)
-        # sort pieces according to the x-coordinate
-        #inverse.piece.Sort((a, b) => a.start.x.CompareTo(b.start.x));
-        inverse.piece.sort(key=lambda x: x.start.x, reverse=True)
-        # merge competing pieces
-        inverse.merge()
-        # merge consequent pieces with same slope
-        inverse.simplify()
-        # return inverse function
-        return inverse
     
     def evaluate(self, input):
         """Calculate function output as out=f(in).
@@ -165,12 +138,6 @@ class PiecewiseLinear(IFunction):
             else:
                 curr += 1
                 next += 1
-    
-    def merge(self):
-        """Merges (averages) pieces which cover the same x-range."""
-        
-        #TODO
-        pass
 
     def removeDuplicitPoints(self, points):
         """Remove duplicit & close points from provided List (in-place).
@@ -181,7 +148,7 @@ class PiecewiseLinear(IFunction):
         
         i = 0
         j = 1
-        while i<len(points):
+        while j<len(points):
             if points[i].x == points[j].x and points[i].y == points[j].y:
                 points.pop(i)
             else:
@@ -292,7 +259,7 @@ class Piece:
             self.b = (self.start.y+self.end.y)/2
         else:
             self.a = (self.start.y - self.end.y) / (self.start.x - self.end.x)
-            self.b = self.start.y - a * self.start.x
+            self.b = self.start.y - self.a * self.start.x
             
     def eval(self, x):
         return self.a*x+self.b;
@@ -318,15 +285,15 @@ class Point:
         - new Point object.
         """
         
-        if x is Point and y is None:
+        if type(x) is Point and y is None:
             self.x = x.x
             self.y = x.y
         elif x is None and y is None:
             self.x = 0
             self.y = 0
-        elif (x is float or x is int) and (y is float or y is int):
+        elif (type(x) is float or type(x) is int) and (type(y) is float or type(y) is int):
             self.x = float(x)
             self.y = float(y)
         else:
-            raise Exception("Error - wrong parameters")
+            raise Exception("Error - wrong parameters: "+str(x)+" of type "+str(type(x))+", "+str(y)+" of type "+str(type(y)))
     

@@ -4,6 +4,11 @@ class IFunction(ABC):
     """Interface for standard SISO function (single input, single output) in form out=f(in)."""
     
     @abstractmethod
+    def __repr__(self):
+        """Return repr(self)."""
+        pass
+        
+    @abstractmethod
     def info(self):
         """Basic description of function.
         
@@ -42,15 +47,6 @@ class IFunction(ABC):
         pass
     
     @abstractmethod
-    def getInverse(self):
-        """Get inverse function.
-         
-        Returns:
-        - either IFunction object or None.
-        """
-        pass
-    
-    @abstractmethod
     def evaluate(self,input):
         """Calculate function output as out=f(in).
         
@@ -63,6 +59,11 @@ class IFunction(ABC):
 
 class IRelation(ABC):
     """Interface for MISO relation (multiple input, single output) between preceding concepts and single following concept."""
+    
+    @abstractmethod
+    def __repr__(self):
+        """Return repr(self)."""
+        pass
     
     @property
     @abstractmethod

@@ -9,14 +9,18 @@ def execute(_map_,cmd,app):
     cmd=cmd.replace("help()","help")
     #run command normally
     with stdoutIO() as s:
+        #setup secure command context (available global builtins & local variables)
+        global loc_vars
+        loc_vars  = {"_map_":_map_,"functions":_map_.config.functions,"relations":_map_.config.relations}
+        glob_vars = {'__builtins__': {"print":print,"dir":safe_dir,"help":help}}
         #catch and return errors when not debugging
         if not app.debug:
             try:
                 try:
-                    response=str(eval(cmd,{'__builtins__': {"print":print,"dir":dir,"help":help}},{"_map_":_map_}))+"\n"
+                    response=str(eval(cmd,glob_vars,loc_vars))+"\n"
                     if response=="None\n": response=s.getvalue()
                 except SyntaxError:
-                    exec(cmd,{'__builtins__': {"print":print,"dir":dir,"help":help}},{"_map_":_map_})
+                    exec(cmd,glob_vars,loc_vars)
                     response=s.getvalue()
                 if response=="":
                     response=str(_map_)+"\n"
@@ -26,10 +30,10 @@ def execute(_map_,cmd,app):
         #do not catch errors when debugging since Flask will show full error traceback
         else:
             try:
-                response=str(eval(cmd,{'__builtins__': {"print":print,"dir":dir,"help":help}},{"_map_":_map_}))+"\n"
+                response=str(eval(cmd,glob_vars,loc_vars))+"\n"
                 if response=="None\n": response=s.getvalue()
             except SyntaxError:
-                exec(cmd,{'__builtins__': {"print":print,"dir":dir,"help":help}},{"_map_":_map_})
+                exec(cmd,glob_vars,loc_vars)
                 response=s.getvalue()
             if response=="":
                 response=str(_map_)+"\n"
@@ -44,6 +48,18 @@ def stdoutIO(stdout=None):
     sys.stdout = stdout
     yield stdout
     sys.stdout = old
+    
+#safe directory listing (without underscores)
+loc_vars=[]
+def safe_dir(d=None):
+    if d:
+        listing = [o for o in dir(d) if "_" not in o]
+        if listing == []:
+            print("[] - Empty listing. Printing help() instead:\n")
+            return help(d)
+        return listing
+    else:
+        return [o for o in loc_vars]
 
 #link generator
 def href_for(s):

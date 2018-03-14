@@ -1,2 +1,8 @@
-add proper D3 licensing https://d3js.org/
+add fcm status page
+add serialization cache
 improve relations api
+add 3T relation
+add 3TNFCM relation
+add more function (identity, sigmoid)
+- - - - - - - 
+add proper D3 licensing https://d3js.org/

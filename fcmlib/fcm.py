@@ -24,11 +24,13 @@ class Concept:
     inputMF = None
     outputMF = None
     
-    def __init__(self, name, value=0):
+    def __init__(self, name, value=0, conf=Config):
         """Concept instantiation operation (constructor).
         
         Attributes:
         - name - concept name
+        - value - initial concept value (optional)
+        - conf - initial functions & relations configuration (optional)
         Returns:
         - new Concept object.
         """
@@ -36,9 +38,9 @@ class Concept:
         self.name = name;
         self.newValue = value;
         self.value = value;
-        self.relation = Config.relation() # TODO - config default relation
-        self.inputMF = Config.inputMF() # TODO - config default function
-        self.outputMF = Config.outputMF() # TODO - config default function
+        self.relation = conf.default_relation()
+        self.inputMF = conf.default_inputMF()
+        self.outputMF = conf.default_outputMF()
     
     def __repr__(self):
         """Return repr(self)."""
@@ -72,7 +74,7 @@ class FCM(dict):
         elif len(args)!=1:
             for k, v in dict(*args, **kwargs).items():
                 vu=float(v) if isinstance(v,(int,float)) else v
-                dict.__setitem__(self, k, Concept(k,vu))
+                dict.__setitem__(self, k, Concept(k,vu,self.config))
 
     def __getitem__(self, key):
         """x.__getitem__(y) <==> x[y]"""
@@ -86,9 +88,9 @@ class FCM(dict):
         if isinstance(val,Concept):
             dict.__setitem__(self, key, val)
         elif isinstance(val,int):
-            dict.__setitem__(self, key, Concept(key,float(val)))
+            dict.__setitem__(self, key, Concept(key,float(val),self.config))
         elif isinstance(val,float):
-            dict.__setitem__(self, key, Concept(key,val))
+            dict.__setitem__(self, key, Concept(key,val,self.config))
         else:
             raise Exception("Error - unsupported value type of",type(val))
 
@@ -111,7 +113,7 @@ class FCM(dict):
         elif name in self:
             raise Exception("Error - name is already used for another concept")
         else:
-            dict.__setitem__(self, name, Concept(name,value))
+            dict.__setitem__(self, name, Concept(name,value,self.config))
             
     def remove(self, name):
         """Remove concept from the FCM.

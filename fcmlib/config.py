@@ -1,19 +1,36 @@
-from fcmlib.relations.simplesigmoid import RSimpleSigmoid
-from fcmlib.functions.piecewiselinear import PiecewiseLinear
+from fcmlib import relations as rlib
+from fcmlib import functions as flib
 
-_defaultRelation = RSimpleSigmoid
-_defaultInputMF = PiecewiseLinear
-_defaultOutputMF = PiecewiseLinear
+_defaultRelation = rlib.RSimpleSigmoid
+_defaultInputMF = flib.PiecewiseLinear
+_defaultOutputMF = flib.PiecewiseLinear
 
 class Config:
     """Configuration for FCM functions & relations
     
     Attributes:
-    - relation  - default FCM relation
-    - inputMF   - default fuzzification functions
-    - outputMF  - default defuzzification functions
+    - default_relation - default FCM relation
+    - default_inputMF  - default fuzzification function
+    - default_outputMF - default defuzzification function
+    
+    - functions - library of available functions
+    - relations - library of available relations
     """
     
-    relation = _defaultRelation
-    inputMF = _defaultInputMF
-    outputMF = _defaultOutputMF
+    default_relation = _defaultRelation
+    default_inputMF = _defaultInputMF
+    default_outputMF = _defaultOutputMF
+    
+    relations = rlib
+    functions = flib
+    
+    def __init__(self):
+        """Config instantiation operation (constructor)."""
+        
+        self.default_relation = _defaultRelation
+        self.default_inputMF = _defaultInputMF
+        self.default_outputMF = _defaultOutputMF
+    
+        self.relations = rlib
+        self.functions = flib
+        

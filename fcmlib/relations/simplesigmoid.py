@@ -23,6 +23,11 @@ class RSimpleSigmoid(IRelation):
         self.previous = []
         self.weights = []
         
+    def __repr__(self):
+        """Return repr(self)."""
+        r = str(dict([(x[0].name,x[1]) for x in zip(self.previous,self.weights)]))
+        return '%s(%s)' % (type(self).__name__, r)
+        
     def info(self):
         """Relation model information.
         
