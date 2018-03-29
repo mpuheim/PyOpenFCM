@@ -7,7 +7,7 @@ import sys, os, io, contextlib, tempfile, _thread, time
 def execute(_map_,cmd,app):
     #disable interactive help
     cmd=cmd.replace("help()","help")
-    #run command normally
+    #run command normally # TODO - run in thread with timeout to avoid freezing in infinite loop
     with stdoutIO() as s:
         #setup secure command context (available global builtins & local variables)
         global loc_vars
@@ -50,7 +50,7 @@ def stdoutIO(stdout=None):
     sys.stdout = old
     
 #safe directory listing (without underscores)
-loc_vars=[]
+loc_vars=[] # TODO - move to separate worker object
 def safe_dir(d=None):
     if d:
         listing = [o for o in dir(d) if "_" not in o]

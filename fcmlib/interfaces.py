@@ -134,22 +134,22 @@ class IRelation(ABC):
         pass
 
     @abstractmethod
-    def backprop(self, delta):
-        """Error delta backpropagation to all preceding concepts.
+    def backprop(self, error):
+        """Error backpropagation to all preceding concepts.
         
         Arguments:
-        - delta - error delta.
+        - error - error of relation.
         Returns:
         - None or raises Error.
         """
         pass
         
     @abstractmethod
-    def adapt(self, delta, gama):
-        """Error delta backpropagation to all preceding concepts.
+    def adapt(self, error, gama):
+        """Relation adaptation/learning via the "delta rule.
         
         Arguments:
-        - delta - error delta.
+        - error - error of relation.
         - gama - learning rate.
         Returns:
         - None or raises Error.

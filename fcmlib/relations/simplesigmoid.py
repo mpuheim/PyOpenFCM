@@ -27,6 +27,14 @@ class RSimpleSigmoid(IRelation):
         """Return repr(self)."""
         r = str(dict([(x[0].name,x[1]) for x in zip(self.previous,self.weights)]))
         return '%s(%s)' % (type(self).__name__, r)
+    
+    def __sigmoid(self, x):
+        """The Sigmoid function, which normalise input x between 0 and 1."""
+        return 1 / (1 + exp(-x))
+
+    def __sigmoid_derivative(self, x):
+        """The derivative of the Sigmoid function."""
+        return x * (1 - x)
         
     def info(self):
         """Relation model information.
@@ -74,7 +82,7 @@ class RSimpleSigmoid(IRelation):
         """Get string containing relations weights.
         
         Attributes:
-        - selection - optional list of selected preceding concept names
+        - selection - optional selected preceding concept name
         Returns:
         - string containing relation weights separated by semicolons
         """
@@ -85,14 +93,11 @@ class RSimpleSigmoid(IRelation):
         #return all weights if no concepts are specified
         if not selection:
             return ";".join([str(s) for s in self.weights])
-        #return weights of only specified concepts
-        toReturn = []
-        for s in selection:
-            weight = [self.weights[self.previous.index(c)] for c in self.previous if c.name==s.name]
-            if weight == []:
-                raise Exception("Error - concept with name "+str(s.name)+" was not found in the relation")
-            toReturn += weight
-        return ";".join(toReturn)
+        #return weight of only specified concept
+        weight = [self.weights[self.previous.index(c)] for c in self.previous if c.name==selection]
+        if weight == []:
+            raise Exception("Error - concept with name "+str(selection)+" was not found in the relation")
+        return str(weight[0])
 
     def set(self, selection, value=None):
         """Set relation using provided data.
@@ -132,29 +137,30 @@ class RSimpleSigmoid(IRelation):
         sum = 0
         for i in range(len(self.previous)):
             sum += self.previous[i].value * self.weights[i]
-        return 1/(1+exp(-sum))
+        return self.__sigmoid(sum)
         
-    def backprop(self, delta):
+    def backprop(self, error):
         """Error backpropagation.
         
         Arguments:
-        - delta - error signal delta
+        - error - error signal for relation
         Returns:
         - None or raises Error exception
         """
         
         for i in range(len(self.previous)):
-            self.previous[i].newDelta += delta * self.weights[i]
+            self.previous[i].newError += error * self.weights[i]
 
-    def adapt(self, delta, gama):
+    def adapt(self, error, gama):
         """Relation adaptation/learning via the "delta rule"
         
         Arguments:
-        - delta - error delta
+        - error - error signal for relation
         - gama  - learning rate
         """
         
         for i in range(len(self.previous)):
+            delta = error * self.__sigmoid_derivative(previous[i].value)
             self.weights[i] += gama * delta * previous[i].value
 
 

@@ -9,17 +9,17 @@ class Config:
     """Configuration for FCM functions & relations
     
     Attributes:
-    - default_relation - default FCM relation
-    - default_inputMF  - default fuzzification function
-    - default_outputMF - default defuzzification function
+    - defaultRelation - default FCM relation
+    - defaultInputMF  - default fuzzification function
+    - defaultOutputMF - default defuzzification function
     
     - functions - library of available functions
     - relations - library of available relations
     """
     
-    default_relation = _defaultRelation
-    default_inputMF = _defaultInputMF
-    default_outputMF = _defaultOutputMF
+    defaultRelation = _defaultRelation
+    defaultInputMF = _defaultInputMF
+    defaultOutputMF = _defaultOutputMF
     
     relations = rlib
     functions = flib
@@ -27,9 +27,9 @@ class Config:
     def __init__(self):
         """Config instantiation operation (constructor)."""
         
-        self.default_relation = _defaultRelation
-        self.default_inputMF = _defaultInputMF
-        self.default_outputMF = _defaultOutputMF
+        self.defaultRelation = _defaultRelation
+        self.defaultInputMF = _defaultInputMF
+        self.defaultOutputMF = _defaultOutputMF
     
         self.relations = rlib
         self.functions = flib

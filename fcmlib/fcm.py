@@ -8,8 +8,8 @@ class Concept:
     - name      - The unique name of the concept.
     - value     - The activation value of the concept in time "t".
     - newValue  - The activation value of the concept in time "t+1".
-    - delta     - The activation error in time "t".
-    - newDelta  - The activation error in time "t+1".
+    - error     - The activation error in time "t".
+    - newError  - The activation error in time "t+1".
     - relation  - The relation (class IRelation) with previous concepts.
     - inputMF   - The function (class IFunction) used for fuzzification
     - outputMF  - The function (class IFunction) used for defuzzification.
@@ -18,8 +18,8 @@ class Concept:
     name = None
     value = None
     newValue = None
-    delta = None
-    newDelta = None
+    error = None
+    newError = None
     relation = None
     inputMF = None
     outputMF = None
@@ -38,9 +38,11 @@ class Concept:
         self.name = name;
         self.newValue = value;
         self.value = value;
-        self.relation = conf.default_relation()
-        self.inputMF = conf.default_inputMF()
-        self.outputMF = conf.default_outputMF()
+        self.error = 0
+        self.newError = 0
+        self.relation = conf.defaultRelation()
+        self.inputMF = conf.defaultInputMF()
+        self.outputMF = conf.defaultOutputMF()
     
     def __repr__(self):
         """Return repr(self)."""

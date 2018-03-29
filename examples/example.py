@@ -1,5 +1,4 @@
 from fcmlib import FCM
-import json
 
 print("initialize new FCM with two concepts")
 map=FCM(C1=0.6,C2=0.4)
@@ -27,13 +26,13 @@ print("list concepts preceding C4")
 print(map.listPreceding("C4"))
 input()
 
-print("show relation of C4")
+print("show relations of C4")
 print(map["C4"].relation.get())
 input()
 
-print("set relation of C4 and show the change")
+print("set relation of C1->C4 and show the change")
 map["C4"].relation.set("C1",0.2)
-print(map["C4"].relation.get())
+print(map["C4"].relation.get("C1"))
 input()
 
 print("FCM in action:")

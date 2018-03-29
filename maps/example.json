@@ -7,13 +7,13 @@
             "pieces": []
         },
         "name": "C1",
-        "newValue": 0.6806955394856543,
+        "newValue": 0.6758955253730676,
         "outputMF": {
             "py/object": "fcmlib.functions.piecewiselinear.PiecewiseLinear",
             "pieces": []
         },
         "relation": null,
-        "value": 0.6806955394856543
+        "value": 0.6758955253730676
     },
     "C2": {
         "py/object": "fcmlib.fcm.Concept",
@@ -52,17 +52,32 @@
             "pieces": []
         },
         "name": "C4",
-        "newValue": 0.7569700661704688,
+        "newValue": 0.7502601055951177,
         "outputMF": {
             "py/object": "fcmlib.functions.piecewiselinear.PiecewiseLinear",
             "pieces": []
         },
         "relation": null,
-        "value": 0.7569700661704688
+        "value": 0.7502601055951177
     },
     "__dict__": {
         "config": {
-            "py/object": "fcmlib.config.Config"
+            "py/object": "fcmlib.config.Config",
+            "defaultInputMF": {
+                "py/type": "fcmlib.functions.piecewiselinear.PiecewiseLinear"
+            },
+            "defaultOutputMF": {
+                "py/type": "fcmlib.functions.piecewiselinear.PiecewiseLinear"
+            },
+            "defaultRelation": {
+                "py/type": "fcmlib.relations.simplesigmoid.RSimpleSigmoid"
+            },
+            "functions": {
+                "py/repr": "fcmlib.functions/fcmlib.functions"
+            },
+            "relations": {
+                "py/repr": "fcmlib.relations/fcmlib.relations"
+            }
         },
         "name": null,
         "relations": {
