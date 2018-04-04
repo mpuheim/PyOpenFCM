@@ -1,6 +1,9 @@
 from fcmlib.config import Config
 import json, jsonpickle
 
+import jsonpickle.ext.numpy as jsonpickle_numpy
+jsonpickle_numpy.register_handlers() #numpy support for object serialization
+
 class Concept:
     """Represents single FCM concept.
     
@@ -45,9 +48,9 @@ class Concept:
         self.outputMF = conf.defaultOutputMF()
     
     def __repr__(self):
-        """Return repr(self)."""
-        
+        """Return repr(self)."""        
         return str(self.value)
+        
 
 class FCM(dict):
     """Represents fuzzy cognitive map. Provides methods to add, connect and configure map concepts and to calculate map updates.
@@ -89,6 +92,9 @@ class FCM(dict):
 
         if isinstance(val,Concept):
             dict.__setitem__(self, key, val)
+        elif key in self:
+            self[key].value=float(val)
+            self[key].newValue=float(val)
         elif isinstance(val,int):
             dict.__setitem__(self, key, Concept(key,float(val),self.config))
         elif isinstance(val,float):
@@ -229,10 +235,8 @@ class FCM(dict):
             self[name]=value
         elif isinstance(value, (int,float)):
             self[name]=float(value)
-        
         else:
-            c = [item for item in self.concepts if item.name == name][0]
-            c.value = float(value)
+            raise Exception("Error - cannot set value")
     
     def update(self):
         """Update activation values of all concept within the map
@@ -241,7 +245,8 @@ class FCM(dict):
         - None or raises Error Exception.
         """
         for name, concept in self.items():
-            concept.newValue = concept.relation.propagate()
+            if len(concept.relation.previous)>0:
+                concept.newValue = concept.relation.propagate()
         for name, concept in self.items():
             concept.value = concept.newValue
     
