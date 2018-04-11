@@ -73,7 +73,7 @@ class SaveHandler:
     files = None
     working = False
     
-    def __init__(self, interval=1, directory="fcmservice"):
+    def __init__(self, interval=10, directory="fcmservice"):
         self.interval = interval
         self.directory = os.path.join(tempfile.gettempdir(),directory)
         self.files = {}

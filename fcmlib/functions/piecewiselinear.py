@@ -16,7 +16,7 @@ class PiecewiseLinear(IFunction):
         - new piecewise linear function object.
         """
         
-        self.pieces = []
+        self.piece = []
         
     def __repr__(self):
         """Return repr(self)."""
@@ -39,9 +39,9 @@ class PiecewiseLinear(IFunction):
         - string containing point coordinates (x:y) of linear breaks separated by spaces
         """
         
-        if len(self.pieces) < 1:
+        if len(self.piece) < 1:
             return ""
-        points = pieces2points(piece)
+        points = self.pieces2points(self.piece)
         return " ".join([str(p.x)+":"+str(p.y) for p in points])
     
     def set(self, params):
@@ -203,7 +203,7 @@ class PiecewiseLinear(IFunction):
         #points to return
         points = []
         #return no points if there are no function pieces
-        if (piece.Count < 1):
+        if (len(piece) < 1):
             raise Exception("Error - cannot convert pieces to points, no pieces were provided")
         #always add initial point
         points.append(Point(piece[0].start));
@@ -211,7 +211,7 @@ class PiecewiseLinear(IFunction):
         prev = None
         for curr in piece:
             #add start point only in case of discontinuity
-            if prev != null and prev.end.y != curr.start.y:
+            if prev != None and prev.end.y != curr.start.y:
                 points.append(Point(curr.start));
             #add end point of each piece
             points.append(Point(curr.end));

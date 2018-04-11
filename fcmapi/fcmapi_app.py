@@ -2,7 +2,7 @@ import datetime
 from fcmlib import FCM
 from fcmapi.templates import *
 from fcmapi.auxiliary import *
-from flask import Flask, make_response, redirect, url_for, request
+from flask import Flask, make_response, redirect, abort, url_for, request
 
 #create service application
 app = Flask(__name__)
@@ -69,6 +69,40 @@ def session(mapname):
     if mapname in _maps_:
         return session_template.replace("{R}",mapname)
     return missing_template.replace("{R}",mapname)
+    
+@app.route('/<mapname>/run/', methods=['POST'])
+def runpost(mapname):
+    if request.method == 'POST' and 'command' in request.form:
+        command=request.form['command']
+        return run(mapname,command)
+    return abort(404)
+    
+@app.route('/<mapname>/run/<command>', methods=['GET'])
+def run(mapname,command):
+    if mapname not in _maps_:
+        return abort(404)
+    #secure command (no underlines)
+    cmd=command.replace("_","")
+    #fix dictionary in JSON object (if any)
+    cmd=cmd.replace('"dict":','"__dict__":')
+    #get FCM object
+    _map_=_maps_[mapname]
+    #use FCM object in command
+    cmd=cmd.replace(mapname,"_map_")
+    #execute secured command
+    response=execute(_map_,cmd,app)
+    response=response.replace("_map_",mapname)
+    #fix map name (if changed to _map_)
+    if _map_.name=="_map_":
+        _map_.name=mapname
+    #rename on server (if renamed)
+    if _map_.name != mapname:
+        _maps_[_map_.name]=_maps_.pop(mapname)
+        _saver_.delete(mapname+".json")
+    #save map on server
+    _saver_.save(_map_.name+".json",_map_.serialize(2))
+    #return response
+    return response
     
 @app.route('/<mapname>/execute/<command>')
 def process(mapname,command):
