@@ -8,24 +8,24 @@ class R3Term(IRelation):
     Attributes:
     - previous  - list of connected preceding concepts
     - weights   - list of (P,D,A) weight tuples
-    - p_weights - list of proportional   (P) weights 
-    - d_weights - list of differential   (D) weights
-    - a_weights - list of moving-average (A) weights
-    - p_values  - list of current activation values of preceding concepts
-    - d_values  - list of difference of activation values of preceding concepts
-    - a_values  - list of moving-average values of preceding concepts
-    - a_window  - time window used to calculate moving average
+    - pweights  - list of proportional   (P) weights 
+    - dweights  - list of differential   (D) weights
+    - aweights  - list of moving-average (A) weights
+    - pvalues   - list of current activation values of preceding concepts
+    - dvalues   - list of difference of activation values of preceding concepts
+    - avalues   - list of moving-average values of preceding concepts
+    - awindow   - time window used to calculate moving average
     """
     
     previous = None
     weights = None
-    p_weights = None
-    d_weights = None
-    a_weights = None
-    p_values = None
-    d_values = None
-    a_values = None
-    a_window = None
+    pweights = None
+    dweights = None
+    aweights = None
+    pvalues = None
+    dvalues = None
+    avalues = None
+    awindow = None
 
     def __init__(self,window=10):
         """Function instantiation operation (constructor).
@@ -36,18 +36,18 @@ class R3Term(IRelation):
         
         self.previous  = []
         self.weights   = []
-        self.p_weights = []
-        self.d_weights = []
-        self.a_weights = []
-        self.p_values  = []
-        self.d_values  = []
-        self.a_values  = []
-        self.a_window = window
+        self.pweights = []
+        self.dweights = []
+        self.aweights = []
+        self.pvalues  = []
+        self.dvalues  = []
+        self.avalues  = []
+        self.awindow = window
         
     def __repr__(self):
         """Return repr(self)."""
         
-        r = str(dict([(x[0].name,(x[1],x[2],x[3])) for x in zip(self.previous,self.p_weights,self.d_weights,self.a_weights)]))
+        r = str(dict([(x[0].name,(x[1],x[2],x[3])) for x in zip(self.previous,self.pweights,self.dweights,self.aweights)]))
         return '%s(%s)' % (type(self).__name__, r)
 
     def __sigmoid(self, x):
@@ -81,12 +81,12 @@ class R3Term(IRelation):
         else:
             self.previous.append(concept)
             self.weights.append([1.0,1.0,1.0])
-            self.p_weights.append(1.0)
-            self.d_weights.append(1.0)
-            self.a_weights.append(1.0)
-            self.p_values.append(concept.value)
-            self.d_values.append(0.0)
-            self.a_values.append(concept.value)
+            self.pweights.append(1.0)
+            self.dweights.append(1.0)
+            self.aweights.append(1.0)
+            self.pvalues.append(concept.value)
+            self.dvalues.append(0.0)
+            self.avalues.append(concept.value)
 
     def detach(self, concept):
         """Detach existing preceding concept from the relation.
@@ -102,12 +102,12 @@ class R3Term(IRelation):
                 if self.previous[i].name == concept.name:
                     self.previous.pop(i)
                     self.weights.pop(i)
-                    self.p_weights.pop(i)
-                    self.d_weights.pop(i)
-                    self.a_weights.pop(i)
-                    self.p_values.pop(i)
-                    self.d_values.pop(i)
-                    self.a_values.pop(i)
+                    self.pweights.pop(i)
+                    self.dweights.pop(i)
+                    self.aweights.pop(i)
+                    self.pvalues.pop(i)
+                    self.dvalues.pop(i)
+                    self.avalues.pop(i)
                     break
         else:
             raise Exception("Error - concept with name was not found in the relation")
@@ -122,7 +122,7 @@ class R3Term(IRelation):
         """
 
         #return empty string if there are no weights
-        if len(self.p_weights) == 0:
+        if len(self.pweights) == 0:
             return ""
         #return all weights if no concepts are specified
         if not selection:
@@ -135,7 +135,7 @@ class R3Term(IRelation):
                 break
         if s == -1:
             raise Exception("Error - no such concept: "+str(selection))
-        return str(self.p_weights[s])+','+str(self.d_weights[s])+','+str(self.a_weights[s])
+        return str(self.pweights[s])+','+str(self.dweights[s])+','+str(self.aweights[s])
 
     def set(self, selection, value=None):
         """Set relation using provided data.
@@ -154,20 +154,20 @@ class R3Term(IRelation):
             for i in range(len(self.previous)):
                 if self.previous[i].name == selection:
                     values=value.split(',')
-                    self.p_weights[i] = float(values[0])
-                    self.d_weights[i] = float(values[1])
-                    self.a_weights[i] = float(values[2])
+                    self.pweights[i] = float(values[0])
+                    self.dweights[i] = float(values[1])
+                    self.aweights[i] = float(values[2])
                     self.weights[i] = [float(values[0]),float(values[1]),float(values[2])]
                     break
         #set all weights
         elif selection and not value:
             tterms = selection.split(";");
-            if len(tterms) != len(self.p_weights):
+            if len(tterms) != len(self.pweights):
                 raise Exception("Error - wrong number of values to be assigned as weights")
             self.weights = [list(map(float(tt.split(",")))) for tt in tterms]
-            self.p_weights = [tt[0] for tt in self.weights]
-            self.d_weights = [tt[1] for tt in self.weights]
-            self.a_weights = [tt[2] for tt in self.weights]
+            self.pweights = [tt[0] for tt in self.weights]
+            self.dweights = [tt[1] for tt in self.weights]
+            self.aweights = [tt[2] for tt in self.weights]
         else:
             raise Exception("Error - wrong parameters - weights are unchanged")
 
@@ -182,15 +182,15 @@ class R3Term(IRelation):
         # Propagate through three-term relation (PDA)
         for i in range(len(self.previous)):
             # D = differential component as difference betwen current and last activation value
-            self.d_values[i] = self.previous[i].value - self.p_values[i]
+            self.dvalues[i] = self.previous[i].value - self.pvalues[i]
             # P = proportional component as current activation value
-            self.p_values[i] = self.previous[i].value
+            self.pvalues[i] = self.previous[i].value
             # A = averaging component as moving average of historical values
-            self.a_values[i] = ((self.a_values[i]*self.a_window)+self.p_values[i])/(1+self.a_window)
+            self.avalues[i] = ((self.avalues[i]*self.awindow)+self.pvalues[i])/(1+self.awindow)
             # sum += w_p*P + w_d*D + w_a*A
-            sum += self.p_weights[i] * self.p_values[i]
-            sum += self.d_weights[i] * self.d_values[i]
-            sum += self.a_weights[i] * self.a_values[i]
+            sum += self.pweights[i] * self.pvalues[i]
+            sum += self.dweights[i] * self.dvalues[i]
+            sum += self.aweights[i] * self.avalues[i]
         # Return thresholded value using sigmoid function
         return self.__sigmoid(sum)
         
@@ -204,9 +204,9 @@ class R3Term(IRelation):
         """
         
         for i in range(len(self.previous)):
-            self.previous[i].newError += error * self.p_weights[i]
-            self.previous[i].newError += error * self.d_weights[i]
-            self.previous[i].newError += error * self.a_weights[i]
+            self.previous[i].newError += error * self.pweights[i]
+            self.previous[i].newError += error * self.dweights[i]
+            self.previous[i].newError += error * self.aweights[i]
 
     def adapt(self, error, gama):
         """Relation adaptation/learning via the "delta rule"
@@ -217,11 +217,11 @@ class R3Term(IRelation):
         """
         
         for i in range(len(self.previous)):
-            p_delta = error * self.__sigmoid_derivative(self.p_values[i])
-            d_delta = error * self.__sigmoid_derivative(self.d_values[i])
-            a_delta = error * self.__sigmoid_derivative(self.d_values[i])
-            self.p_weights[i] += gama * p_delta * self.p_values[i]
-            self.d_weights[i] += gama * d_delta * self.d_values[i]
-            self.a_weights[i] += gama * a_delta * self.a_values[i]
+            p_delta = error * self.__sigmoid_derivative(self.pvalues[i])
+            d_delta = error * self.__sigmoid_derivative(self.dvalues[i])
+            a_delta = error * self.__sigmoid_derivative(self.dvalues[i])
+            self.pweights[i] += gama * p_delta * self.pvalues[i]
+            self.dweights[i] += gama * d_delta * self.dvalues[i]
+            self.aweights[i] += gama * a_delta * self.avalues[i]
 
 
