@@ -31,3 +31,7 @@ Usage of Web API:
 - set FLASK_APP=fcmapi_app.py  
 - set FLASK_DEBUG=0  
 - flask run --host=0.0.0.0  
+
+Full PyOpenFCM Library documentation:  
+- https://mpuheim.github.io/PyOpenFCM/docs/html/  
+
